@@ -606,7 +606,7 @@ class JobDetails extends CI_Controller
                             $val = 'applied_jobs.id,applied_jobs.job_id,applied_jobs.user_id,
                             applied_jobs.is_active, applied_jobs.created_at,
                          
-                             user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at
+                            user.role_id, user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at
                              ';
 
                             $join = array(
@@ -725,7 +725,7 @@ class JobDetails extends CI_Controller
                     } else {
                         $this->responseData['code']    = 401;
                         $this->responseData['status']  = 'failed';
-                        $this->responseData['message'] = 'Required param missing: job id!';
+                        $this->responseData['message'] = 'Required param missing: user id!';
                         unset($this->responseData['data']);
                     }
                 } else {
