@@ -5,8 +5,9 @@ class SeekkMobile extends CI_Controller
 {
     public $responseData = array('code' => 200, 'status' => 'success', 'message' => 'Your have registered successfully'); // set API response array
     public $customerRoleId    = null;
-    public $DIR       = 'assets/api/images/';
-    public $DIR_doc   = 'assets/api/doc/';
+    public $DIR         = 'assets/api/images/';
+    public $DIR_doc     = 'assets/api/doc/';
+    public $DIR_idproof = 'assets/api/idproof/';
     public function __construct()
     {
         parent::__construct();
@@ -70,7 +71,7 @@ class SeekkMobile extends CI_Controller
                         $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
                         $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
                         $this->form_validation->set_rules('email', 'Email', 'required|trim');
-                        $this->form_validation->set_rules('gender', 'English Level', 'required|trim');
+                        $this->form_validation->set_rules('gender', 'Gender', 'required|trim');
                         $this->form_validation->set_rules('dob', 'Date of Birth', 'required|trim');
                         $this->form_validation->set_rules('city', 'City', 'required|trim');
 
@@ -1069,6 +1070,552 @@ class SeekkMobile extends CI_Controller
                         $this->responseData['code']    = 404;
                         $this->responseData['status']  = 'failed';
                         $this->responseData['message'] = 'Required param missing: api_key!';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request!';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+    /*
+     * Updating Employee Basic Details
+     */
+    public function editBasicDetails()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key    = $json_data->api_key;
+            $user_id    = $json_data->user_id;
+            $gender     = $json_data->gender;
+            $dob        = $json_data->dob;
+            $email      = $json_data->email;
+            $mobile     = $json_data->mobile;
+            $id_proof   = $json_data->id_proof;
+            $id_upload  = $json_data->id_upload;
+
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+                        if ($this->form_validation->run() == TRUE) {
+                            // $userData['id']          = $user_id;
+                            $userData['gender']      = $gender;
+                            $userData['dob']         = $dob;
+                            $userData['email']       = $email;
+                            $userData['mobile']      = $mobile;
+                            $userData['id_proof']    = $id_proof;
+                            $userData['id_upload']   = $id_upload;
+                            $userData['updated_at']         = strtotime(date('d-m-Y'));
+
+                            $rand  = rand(10, 10000);
+                            $doc   = preg_replace('#^data:image/[^;]+;base64,#', '', $userData['id_upload']);
+
+                            $name                  = $this->DIR_idproof . $rand . 'doc.pdf';
+                            $new                   = file_put_contents($name, base64_decode($doc));
+                            $userData['id_upload'] = $rand . 'doc.pdf';
+
+                            if ($user_id) {
+                                $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+                                // print_r($userData);
+                                // die();
+
+                                if (!empty($getRecord)) {
+                                    if (empty($getRecord['id_upload'])) {
+                                        $result = $this->UserModel->update('user', $userData, array('id' => $user_id));
+                                    } else {
+                                        unlink($this->DIR_idproof . $getRecord['id_upload']);
+                                        $result = $this->UserModel->update('user', $userData, array('id' => $user_id));
+                                    }
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['idproof_url']  = base_url('assets/api/idproof/');
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Wrong User';
+                                        unset($this->responseData['data']);
+                                    }
+                                } else {
+                                    $this->responseData['code']    = 404;
+                                    $this->responseData['message'] = 'User(Employee) not found!';
+                                    $this->responseData['status']  = 'failed';
+                                }
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'Not found!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+    /*
+     * show employee resume 
+     */
+    public function showResume()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key    = $json_data->api_key;
+            $user_id    = $json_data->user_id;
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+                        if ($this->form_validation->run() == TRUE) {
+
+                            $result = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row();
+
+                            if ($result->resume) {
+                                $this->responseData['code']         = 200;
+                                $this->responseData['status']       = 'success';
+                                // $this->responseData['data']         = $result;
+                                $this->responseData['message']      = "Resume available.";
+                                $this->responseData['doc_url']      = base_url('assets/api/doc/' . $result->resume);
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['status']  = 'failed';
+                                $this->responseData['message'] = 'Resume not available.';
+                                unset($this->responseData['data']);
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+
+    /*
+     * Updating mployee resume
+     */
+    public function updateResume()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key    = $json_data->api_key;
+            $user_id    = $json_data->user_id;
+            $resume     = $json_data->resume;
+
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+                        $this->form_validation->set_rules('resume', 'Resume', 'required|trim');
+
+
+                        if ($this->form_validation->run() == TRUE) {
+                            // $userData['id']          = $user_id;
+                            $userData['resume']         = $resume;
+                            $userData['uploaded_at']    = strtotime(date('d-m-Y'));
+
+                            $rand  = rand(10, 10000);
+                            $doc   = preg_replace('#^data:image/[^;]+;base64,#', '', $userData['resume']);
+
+                            $name                  = $this->DIR_doc . $rand . 'doc.pdf';
+                            $new                   = file_put_contents($name, base64_decode($doc));
+                            $userData['resume']    = $rand . 'doc.pdf';
+
+                            if ($user_id) {
+                                $getRecord = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row();
+                                // print_r($getRecord->resume);
+                                // die();
+
+                                if (!empty($getRecord)) {
+                                    if (empty($getRecord->resume)) {
+                                        $result = $this->CommonModel->update('doc_resume', $userData, array('user_id' => $user_id));
+                                    } else {
+                                        unlink($this->DIR_doc . $getRecord->resume);
+                                        $result = $this->CommonModel->update('doc_resume', $userData, array('user_id' => $user_id));
+                                    }
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['doc_url']      = base_url('assets/api/doc/');
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } else {
+                                    $this->responseData['code']    = 404;
+                                    $this->responseData['message'] = 'User(Employee) not found!';
+                                    $this->responseData['status']  = 'failed';
+                                }
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'Not found!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+
+    /*
+     * Updating Employee Skills Info
+     */
+    public function editSkillsInfo()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key           = $json_data->api_key;
+            $user_id           = $json_data->user_id;
+            $skill             = $json_data->skill;
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+                        if ($this->form_validation->run() == TRUE) {
+
+                            $userData['user_id']         = $user_id;
+                            $userData['skill']           = strtoupper($skill);
+                            $userData['updated_at']      = strtotime(date('d-m-Y'));
+
+                            if ($user_id) {
+                                $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+                                $getEducationRecord = $this->UserModel->getRecord('skill_info', array('user_id' => $user_id))->row_array();
+
+                                if (!empty($getRecord) && !empty($getEducationRecord)) {
+                                    $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } elseif (!empty($getRecord) && empty($getEducationRecord)) {
+
+                                    $result = $this->UserModel->insert('skill_info', $userData);
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } else {
+                                    $this->responseData['code'] = 404;
+                                    $this->responseData['status']  = 'failed';
+                                    $this->responseData['message'] = 'Not found user or skills info!';
+                                }
+                            } else {
+                                $this->responseData['code'] = 404;
+                                $this->responseData['status']  = 'failed';
+                                $this->responseData['message'] = 'Not found user id';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+    /*
+     * Updating Employee Education Info
+     */
+    public function editEducationInfo()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key           = $json_data->api_key;
+            $user_id           = $json_data->user_id;
+            $highest_education = $json_data->highest_education;
+            $college_name      = $json_data->college_name;
+            $degree            = $json_data->degree;
+            $specialization    = $json_data->specialization;
+            $education_type    = $json_data->education_type;
+            $comp_year         = $json_data->comp_year;
+
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+
+                        if ($this->form_validation->run() == TRUE) {
+
+                            $userData['user_id']              = $user_id;
+                            $userData['highest_education']    = $highest_education;
+
+                            if ($highest_education >= 3) {
+
+                                $userData['college_name']     = $college_name;
+                                $userData['degree']           = $degree;
+                                $userData['specialization']   = $specialization;
+                                $userData['education_type']   = $education_type;
+                                $userData['comp_year']        = $comp_year;
+                            } else {
+                                $userData['college_name']     = NULL;
+                                $userData['degree']           = NULL;
+                                $userData['specialization']   = NULL;
+                                $userData['education_type']   = NULL;
+                                $userData['comp_year']        = NULL;
+                            }
+
+                            $userData['updated_at']         = strtotime(date('d-m-Y'));
+
+                            if ($user_id) {
+                                $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+                                $getEducationRecord = $this->UserModel->getRecord('education_info', array('user_id' => $user_id))->row_array();
+
+                                if (!empty($getRecord) && !empty($getEducationRecord)) {
+                                    $result = $this->UserModel->update('education_info', $userData, array('user_id' => $user_id));
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } elseif (!empty($getRecord) && empty($getEducationRecord)) {
+
+                                    $result = $this->UserModel->insert('education_info', $userData);
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Wrong User';
+                                        unset($this->responseData['data']);
+                                    }
+                                } else {
+                                    $this->responseData['code'] = 404;
+                                    $this->responseData['message'] = 'Not found user or education info!';
+                                    $this->responseData['status']  = 'failed';
+                                }
+                            } else {
+                                $this->responseData['code']   = 404;
+                                $this->responseData['message'] = 'Not found user id!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
                     }
                 } else {
                     $this->responseData['code']    = 400;
