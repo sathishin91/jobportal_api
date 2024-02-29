@@ -69,6 +69,14 @@ class CommonModel extends CI_Model
 		return $this->db->get();
 	}
 
+	// public function GetRecords($tableName, $whereClause = NULL, $selectColumns = '*', $limitCount = 0, $offsetValue = 0)
+	// {
+	// 	// print_r($whereClause);
+	// 	// die();
+	// 	$query = $this->db->query("CALL GetRecordsDynamic(?, ?, ?, ?, ?)", array($tableName, '{"id": 1}', $selectColumns, $limitCount, $offsetValue));
+	// 	$result = $query->result_array();
+	// }
+
 	public function dbjoin($joins)
 	{
 		if (is_array($joins) && !empty($joins)) {
@@ -108,6 +116,29 @@ class CommonModel extends CI_Model
 			$this->db->limit($limit, $offset);
 
 		return $this->db->get($tbl);
+	}
+
+	public function getMatchingDataBySkills($where_in_val)
+	{
+		// $where_in_val = array('REACTJS', 'NODEJS');
+		// $this->db->select('*');
+		// if ($where_in_val != '')
+		// 	$this->db->where_in('skill', $where_in_val);
+		// return $this->db->get('skill_info');
+		// print_r($where_in_val);
+		// die();
+		$query = $this->db
+			// ->select('*')
+			->from("skill_info")
+			->or_like('skill', $where_in_val)
+			->get();
+
+
+		if ($query->num_rows() > 0) {
+			return $query->result();
+		} else {
+			return false;
+		}
 	}
 
 	public function select_r($tbl, $select = '*', $where = '', $order_by = '', $order = '', $like = '', $limit = FALSE, $offset = 0, $where_in_field = '', $where_in_val = '', $groupby = '', $find_in_set = '')
@@ -286,17 +317,17 @@ class CommonModel extends CI_Model
 		else
 			return $this->db->get($table);
 	}
-	
 
-    public function getJoinById($val, $id)
+
+	public function getJoinById($val, $id)
 	{
 		$query = $this->db
 			->select($val)
 			->from("job_details")
 			->join("job_location", "job_location.address_no = job_details.address_no")
-            ->join("candidate_req", "candidate_req.job_id = job_details.id")
+			->join("candidate_req", "candidate_req.job_id = job_details.id")
 			->join("interviewer_info", "interviewer_info.job_id = job_details.id")
-            
+
 			->where('job_details.id', $id)
 			->get();
 
@@ -307,8 +338,8 @@ class CommonModel extends CI_Model
 		}
 	}
 
-	
-	 public function getJoinById2($val, $id)
+
+	public function getJoinById2($val, $id)
 	{
 		$query = $this->db
 			->select($val)
@@ -325,7 +356,7 @@ class CommonModel extends CI_Model
 			return false;
 		}
 	}
-	
+
 	public function getJoinById3($val, $id)
 	{
 		$query = $this->db
@@ -1059,4 +1090,130 @@ class CommonModel extends CI_Model
 
 		return $text;
 	}
+
+	function send_sms($phoneNumber, $message)
+	{
+		// Replace these values with your actual Kalyera API credentials
+		$apiUrl = 'https://api.in.kaleyra.io/';
+		$apiKey = 'A7ad7067d45da3a49cfc367e41623196e';
+		$apiSecret = 'seekk@123';
+
+		// Prepare the data
+		$postData = [
+			'to' => $phoneNumber,
+			'text' => $message,
+		];
+
+		// Initialize cURL session
+		$ch = curl_init($apiUrl);
+
+		// Set cURL options
+		curl_setopt($ch, CURLOPT_HTTPHEADER, [
+			'Authorization: Basic ' . base64_encode($apiKey . ':' . $apiSecret),
+		]);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		// Execute cURL session and get the response
+		$response = curl_exec($ch);
+
+		// Check for cURL errors
+		if (curl_errno($ch)) {
+			$response = 'Curl error: ' . curl_error($ch);
+		}
+
+		// Close cURL session
+		curl_close($ch);
+
+		echo '<pre>';
+		print_r($response);
+		die();
+		return $response;
+	}
+
+
+	// public function curlReq($url, $reqData = '')
+	// {
+	// 	$ch = curl_init();
+	// 	curl_setopt($ch, CURLOPT_URL, $url);
+	// 	curl_setopt($ch, CURLOPT_POST, 1);
+	// 	curl_setopt($ch, CURLOPT_POSTFIELDS, $reqData);
+	// 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	// 	$server_output = curl_exec($ch);
+	// 	curl_close($ch);
+	// 	return $server_output;
+	// }
+
+	// function curlReq($url)
+	// {
+	// 	$ch = curl_init($url);
+	// 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	// 	//curl_setopt($ch, CURLOPT_ENCODING , "");
+	// 	$data = curl_exec($ch);
+	// 	curl_close($ch);
+	// 	return $data;
+	// }
+
+
+	// public function sendOtp()
+	// {
+	// 	// print_r($email);
+	// 	// die();
+
+	// 	$sendMail = $this->curlReq('https://api-alerts.kaleyra.com/v4/?api_key=A7ad7067d45da3a49cfc367e41623196e&method=sms&message=hello&to=+918871249919&sender=KLRHXA');
+	// 	print_r($sendMail);
+	// 	die();
+	// 	return $sendMail;
+	// }
+
+	public function sendOtp()
+	{
+		$curl = curl_init();
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => 'https://api-global.kaleyra.com/v4/?api_key=A7ad7067d45da3a49cfc367e41623196e&message=Welcome%20to%20Kaleyra%20API&sender=KLRHXA&to=8871249919&method=sms',
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'GET',
+		));
+
+		$response = curl_exec($curl);
+
+		curl_close($curl);
+		echo $response;
+	}
+
+	public function getUsersBySkill($skills)
+	{
+		$this->db->where_in('primary_skills', $skills);
+		$query = $this->db->get('job_details');
+		return $query->result();
+	}
+
+	public function filterBySkills(array $skills)
+	{
+		// Escape the skills array values to avoid SQL injection
+		$escapedSkills = array_map(array($this->db, 'escape_str'), $skills);
+
+		// Create a WHERE clause for each skill
+		$whereClauses = [];
+		foreach ($escapedSkills as $skill) {
+			$whereClauses[] = "primary_skills LIKE '%{$skill}%'";
+			$whereClauses[] = "secondary_skills LIKE '%{$skill}%'";
+		}
+
+		// Add the WHERE clauses to the query
+		$this->db->where(implode(' OR ', $whereClauses), NULL, FALSE);
+
+		// Execute the query and return the results
+		$query = $this->db->get('job_details');
+		return $query->result();
+	}
 }
+
+// https://api-alerts.kaleyra.com/v4/?api_key=Ad9e5XXXXXXXXXXXXX
