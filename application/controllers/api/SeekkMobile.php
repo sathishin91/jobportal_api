@@ -1780,8 +1780,28 @@ class SeekkMobile extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $result = $this->CommonModel->select_rec('user', '*', array('id' => $user_id, 'role_id' => 4))->result_array();
+                            $val = 'user.user_avatar,user.first_name,user.last_name,user.dob,user.email,user.mobile,user.id_proof,user.created_at,user.updated_at,user.is_active,user.is_verify,
+                            doc_resume.resume,
+                            skill_info.skill,
+                            education_info.highest_education,education_info.college_name,education_info.degree,education_info.specialization,education_info.education_type,education_info.comp_year,
+                            skill_info.pref_work_type,skill_info.pref_job_city';
 
+                            $join = array(
+                                array('table' => 'doc_resume', 'condition' => 'doc_resume.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            );
+
+                            // $likearray = null;
+
+                            // if ($userData['user_id'] && $userData['user_id'] != '') {
+                            //     $likearray['check_in.user_id'] = $userData['user_id'];
+                            // }
+                            // $user_id =
+                            $whereCompleted  = array('user.id' => $user_id, 'user.role_id' => 4);
+                            $result = $this->CommonModel->get_join('user', $val, $join, $whereCompleted, $order_by = 'user.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row();
+                            // print_r($result);
+                            // die();
 
                             if ($result) {
                                 // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
@@ -1789,7 +1809,28 @@ class SeekkMobile extends CI_Controller
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
                                 $this->responseData['message']      = 'Profile fetched successfully.';
-                                $this->responseData['data']         = $result;
+                                $this->responseData['data']         = [
+                                    'user_avatar'     => base_url('assets/api/images/' . $result->user_avatar),
+                                    'first_name'      => $result->first_name,
+                                    'last_name'       => $result->last_name,
+                                    'dob'             => $result->dob,
+                                    'email'           => $result->email,
+                                    'mobile'          => $result->mobile,
+                                    'id_proof'        => $result->id_proof,
+                                    'resume'          => base_url('assets/api/doc/' . $result->resume),
+                                    'skill'           => $result->skill,
+                                    'highest_education'  => $result->highest_education,
+                                    'college_name'    => $result->college_name,
+                                    'degree'          => $result->degree,
+                                    'specialization'  => $result->specialization,
+                                    'education_type'  => $result->education_type,
+                                    'comp_year'       => $result->comp_year,
+                                    'pref_work_type'  => $result->pref_work_type, 'pref_job_city'   => $result->pref_job_city,
+                                    'is_active'       => $result->is_active,
+                                    'is_verify'       => $result->is_verify,
+                                    'created_at'      => $result->created_at,
+                                    'updated_at'      => $result->updated_at,
+                                ];
                             } else {
                                 $this->responseData['code']    = 404;
                                 $this->responseData['message'] = 'Not fetched successfully!';
