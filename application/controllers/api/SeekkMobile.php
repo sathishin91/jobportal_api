@@ -940,8 +940,26 @@ class SeekkMobile extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $result = $this->CommonModel->select_rec('job_details', '*', array('id' => $job_id, 'is_verify' => 1))->result_array();
+                            $val = 'job_details.*,
+                            job_location.location_type,job_location.location_type_name,job_location.wo_place,job_location.wo_city,job_location.wh_address,job_location.wh_address2,job_location.wh_city,
+                            industry.industry_name,
+                            department.department_name,
+                            role.role_name,
+                            user.company_name
+                           ';
 
+                            $join = array(
+                                array('table' => 'job_location', 'condition' => 'job_location.address_no = job_details.address_no', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'industry', 'condition' => 'industry.id = job_details.industry', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'department', 'condition' => 'department.id = job_details.department', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'role', 'condition' => 'role.id = job_details.role', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'user', 'condition' => 'user.id = job_details.user_id', 'jointype' => 'LEFT JOIN'),
+
+                            );
+
+                            $where = array('job_details.id' => $job_id, 'job_details.is_verify' => 1);
+
+                            $result = $this->CommonModel->get_join('job_details', $val, $join, $where, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row();
 
                             if ($result) {
                                 // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
@@ -1846,6 +1864,102 @@ class SeekkMobile extends CI_Controller
                         $this->responseData['code']    = 404;
                         $this->responseData['status']  = 'failed';
                         $this->responseData['message'] = 'Required param missing: user_id!';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request!';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+    /*
+     * search job by skills
+     */
+    public function searchJobBySkill()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key           = $json_data->api_key;
+            $skill             = $json_data->skill;
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($api_key)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('api_key', 'Api Key', 'required|trim');
+
+                        if ($this->form_validation->run() == TRUE) {
+                            $val = 'job_details.*,
+                            candidate_req.job_id, candidate_req.skills,
+                            job_location.location_type,job_location.location_type_name,job_location.wo_place,job_location.wo_city,job_location.wh_address,job_location.wh_address2,job_location.wh_city,
+                            industry.industry_name,
+                            department.department_name,
+                            role.role_name,
+                            user.company_name
+                           ';
+
+                            $join = array(
+                                array('table' => 'job_details', 'condition' => 'job_details.id = candidate_req.job_id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'job_location', 'condition' => 'job_location.address_no = job_details.address_no', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'industry', 'condition' => 'industry.id = job_details.industry', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'department', 'condition' => 'department.id = job_details.department', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'role', 'condition' => 'role.id = job_details.role', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'user', 'condition' => 'user.id = job_details.user_id', 'jointype' => 'LEFT JOIN'),
+
+                            );
+
+                            $like['candidate_req.skills'] = $skill;
+
+                            $whereCompleted  = array('job_details.is_verify' => 1);
+                            $result = $this->CommonModel->get_join('candidate_req', $val, $join, $whereCompleted, $order_by = 'candidate_req.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = $like, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
+
+                            if ($result) {
+                                // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
+
+                                $this->responseData['code']         = 200;
+                                $this->responseData['status']       = 'success';
+                                $this->responseData['message']      = 'Job list fetched successfully.';
+                                $this->responseData['data']         = $result;
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'Not fetched successfully!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: api_key!';
                     }
                 } else {
                     $this->responseData['code']    = 400;
