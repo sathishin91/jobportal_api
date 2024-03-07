@@ -1799,13 +1799,12 @@ class SeekkMobile extends CI_Controller
                         if ($this->form_validation->run() == TRUE) {
 
                             $val = 'user.user_avatar,user.first_name,user.last_name,user.dob,user.email,user.mobile,user.id_proof,user.created_at,user.updated_at,user.is_active,user.is_verify,
-                            doc_resume.resume,
                             skill_info.skill,
                             education_info.highest_education,education_info.college_name,education_info.degree,education_info.specialization,education_info.education_type,education_info.comp_year,
                             skill_info.pref_work_type,skill_info.pref_job_city';
 
                             $join = array(
-                                array('table' => 'doc_resume', 'condition' => 'doc_resume.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                                // array('table' => 'doc_resume', 'condition' => 'doc_resume.user_id = user.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
                             );
@@ -1835,7 +1834,8 @@ class SeekkMobile extends CI_Controller
                                     'email'           => $result->email,
                                     'mobile'          => $result->mobile,
                                     'id_proof'        => $result->id_proof,
-                                    'resume'          => base_url('assets/api/doc/' . $result->resume),
+                                    // 'resume'          => base_url('assets/api/doc/' . $result->resume),
+                                    'resume'          => ($resume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row()) ? base_url('assets/api/doc/' . $resume->resume) : NULL,
                                     'skill'           => $result->skill,
                                     'highest_education'  => $result->highest_education,
                                     'college_name'    => $result->college_name,
@@ -1851,7 +1851,7 @@ class SeekkMobile extends CI_Controller
                                 ];
                             } else {
                                 $this->responseData['code']    = 404;
-                                $this->responseData['message'] = 'Not fetched successfully!';
+                                $this->responseData['message'] = 'No user data found!';
                                 $this->responseData['status']  = 'failed';
                             }
                         } else {
