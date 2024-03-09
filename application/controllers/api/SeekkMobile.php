@@ -97,6 +97,8 @@ class SeekkMobile extends CI_Controller
                             $new                = file_put_contents($name, base64_decode($image));
                             $userData['user_avatar'] = $rand . 'image.png';
 
+                            // print_r($userData);
+                            // die();
 
                             if ($user_id) {
                                 $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
@@ -113,7 +115,11 @@ class SeekkMobile extends CI_Controller
                                         $this->responseData['code']         = 200;
                                         $this->responseData['status']       = 'success';
                                         // $this->responseData['data']         = $result;
-                                        $this->responseData['img_url']   = base_url('assets/api/images/');
+                                        if ($userData['user_avatar']) {
+                                            $this->responseData['img_url']  = base_url('assets/api/images/' . $userData['user_avatar']);
+                                        } else {
+                                            $this->responseData['img_url']  = base_url('assets/api/images/');
+                                        }
                                         $this->responseData['message']      = "Added successfully.";
                                     } else {
                                         $this->responseData['code']    = 401;
@@ -613,6 +619,96 @@ class SeekkMobile extends CI_Controller
         self::setOutPut();
     }
 
+    /*
+     * Add Documents
+     */
+    public function addDocuments()
+    {
+        $json_data = json_decode(file_get_contents("php://input"));
+        $api_key           = $json_data->api_key;
+        $user_id           = $json_data->user_id;
+        $resumes           = $json_data->resumes;
+
+        if ($json_data) {
+            // $api_key = $this->input->post('api_key');
+            $api_key = $json_data->api_key;
+
+            if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                $reqData = $json_data;
+                $reqData = (array) $reqData;
+
+                if (!empty($user_id)) {
+
+                    $this->form_validation->set_data($reqData);
+                    $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+                    if ($this->form_validation->run() == TRUE) {
+
+                        if ($user_id) {
+                            $getRecord          = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+                            $getDocCount = $this->UserModel->countRecord('documents', array('user_id' => $user_id));
+                            $resumeCount = count($resumes);
+
+                            if (!empty($getRecord)) {
+                                if ($getDocCount + $resumeCount <= 5) {
+                                    foreach ($resumes as $resume) {
+                                        $userData['user_id']        = $user_id;
+                                        $userData['document']       = $resume;
+                                        $userData['uploaded_at']    = strtotime(date('d-m-Y'));
+
+                                        $rand  = rand(10, 10000);
+                                        $doc = preg_replace('#^data:image/[^;]+;base64,#', '', $userData['document']);
+
+                                        $name                 = $this->DIR_doc . $rand . 'doc.pdf';
+                                        $new                  = file_put_contents($name, base64_decode($doc));
+                                        $userData['document'] = $rand . 'doc.pdf';
+
+                                        $res = $this->CommonModel->insert('documents', $userData);
+                                        if ($res) {
+                                            $this->responseData['code']    = 200;
+                                            $this->responseData['message'] = 'Uploaded Successfully.';
+                                            $this->responseData['status']  = 'failed';
+                                        }
+                                    }
+                                } else {
+                                    $this->responseData['code']    = 401;
+                                    $this->responseData['message'] = 'Document count reach, plz remove the doc and try again!';
+                                    $this->responseData['status']  = 'failed';
+                                }
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'User not found!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $this->responseData['code']    = 404;
+                            $this->responseData['message'] = 'Not found!';
+                            $this->responseData['status']  = 'failed';
+                        }
+                    } else {
+                        $msg = $this->ApiCommonModel->validationErrorMsg();
+                        $this->responseData['code']    = 400;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = $msg;
+                    }
+                } else {
+                    $this->responseData['code']    = 404;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Required param missing: user_id';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid api key!';
+            }
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Invalid request';
+        }
+
+        self::setOutPut();
+    }
 
     /*
      * Adding Employee Skills Info
@@ -676,7 +772,8 @@ class SeekkMobile extends CI_Controller
                                 if ($result) {
                                     $this->responseData['code']         = 200;
                                     $this->responseData['status']       = 'success';
-                                    $this->responseData['data']         = $result;
+                                    $this->responseData['resume_url']   = base_url('assets/api/doc/');
+                                    // $this->responseData['data']         = $result;
                                     $this->responseData['message']      = "Added successfully.";
                                 } else {
                                     $this->responseData['code']    = 401;
@@ -750,23 +847,37 @@ class SeekkMobile extends CI_Controller
 
                             if ($user_id) {
 
-                                $getUserInfoStatus     = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array()['is_completed'];
+                                $getUserInfoStatus     = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row();
+
                                 if ($getUserInfoStatus == NULL) {
                                     $getUserInfoStatus = 0;
+                                } else {
+                                    $getUserInfoStatus = $getUserInfoStatus->is_completed;
                                 }
 
-                                $getEduInfoStatus      = $this->UserModel->getRecord('education_info', array('user_id' => $user_id))->row_array()['is_completed'];
+
+                                $getEduInfoStatus      = $this->UserModel->getRecord('education_info', array('user_id' => $user_id))->row();
                                 if ($getEduInfoStatus == NULL) {
                                     $getEduInfoStatus = 0;
+                                } else {
+                                    $getEduInfoStatus = $getEduInfoStatus->is_completed;
                                 }
 
-                                $getExpInfoStatus      = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array()['is_completed'];
+
+                                $getExpInfoStatus      = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row();
                                 if ($getExpInfoStatus == NULL) {
                                     $getExpInfoStatus = 0;
+                                } else {
+                                    $getExpInfoStatus = $getExpInfoStatus->is_completed;
                                 }
-                                $getSkillsInfoStatus   = $this->UserModel->getRecord('skill_info', array('user_id' => $user_id))->row_array()['is_completed'];
+
+
+                                $getSkillsInfoStatus   = $this->UserModel->getRecord('skill_info', array('user_id' => $user_id))->row();
+
                                 if ($getSkillsInfoStatus == NULL) {
                                     $getSkillsInfoStatus = 0;
+                                } else {
+                                    $getSkillsInfoStatus = $getSkillsInfoStatus->is_completed;
                                 }
 
                                 $final = $getUserInfoStatus + $getEduInfoStatus + $getExpInfoStatus + $getSkillsInfoStatus;
@@ -1798,16 +1909,18 @@ class SeekkMobile extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $val = 'user.user_avatar,user.first_name,user.last_name,user.dob,user.email,user.mobile,user.id_proof,user.created_at,user.updated_at,user.is_active,user.is_verify,
-                            skill_info.skill,
-                            education_info.highest_education,education_info.college_name,education_info.degree,education_info.specialization,education_info.education_type,education_info.comp_year,
-                            skill_info.pref_work_type,skill_info.pref_job_city';
 
-                            $join = array(
-                                // array('table' => 'doc_resume', 'condition' => 'doc_resume.user_id = user.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
-                            );
+
+                            // $val = 'user.user_avatar,user.first_name,user.last_name,user.dob,user.email,user.mobile,user.id_proof,user.created_at,user.updated_at,user.is_active,user.is_verify,
+                            //     skill_info.skill,
+                            //     education_info.highest_education,education_info.college_name,education_info.degree,education_info.specialization,education_info.education_type,education_info.comp_year,
+                            //     skill_info.pref_work_type,skill_info.pref_job_city';
+
+                            // $join = array(
+                            //     // array('table' => 'doc_resume', 'condition' => 'doc_resume.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            //     array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            //     array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            // );
 
                             // $likearray = null;
 
@@ -1815,39 +1928,87 @@ class SeekkMobile extends CI_Controller
                             //     $likearray['check_in.user_id'] = $userData['user_id'];
                             // }
                             // $user_id =
-                            $whereCompleted  = array('user.id' => $user_id, 'user.role_id' => 4);
-                            $result = $this->CommonModel->get_join('user', $val, $join, $whereCompleted, $order_by = 'user.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row();
+                            // $whereCompleted  = array('user.id' => $user_id, 'user.role_id' => 4);
+                            // $result = $this->CommonModel->get_join('user', $val, $join, $whereCompleted, $order_by = 'user.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row();
                             // print_r($result);
                             // die();
 
-                            if ($result) {
-                                // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
+                            // $getUserAvatar = ($this->CommonModel->getRecord('user', array('id' => $user_id))->row()) ? base_url('assets/api/images/' . $user_avatar->user_avatar) : NULL;
+
+                            $getBasicDetails = $this->CommonModel->getRecord('user', array('id' => $user_id))->row();
+
+                            // print_r($getBasicDetails->is_active);
+                            // die();
+
+                            $getSkillsInfo = $this->CommonModel->getRecord('skill_info', array('user_id' => $user_id))->row();
+
+                            $getEducationInfo = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row();
+
+                            // $checkSkillsInfo    = $this->CommonModel->select('skill_info', array('user_id' => $user_id))->row();
+                            // $checkEducationInfo = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row();
+
+                            if ($getBasicDetails || $getSkillsInfo || $getEducationInfo) {
 
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
                                 $this->responseData['message']      = 'Profile fetched successfully.';
-                                $this->responseData['data']         = [
-                                    'user_avatar'     => base_url('assets/api/images/' . $result->user_avatar),
-                                    'first_name'      => $result->first_name,
-                                    'last_name'       => $result->last_name,
-                                    'dob'             => $result->dob,
-                                    'email'           => $result->email,
-                                    'mobile'          => $result->mobile,
-                                    'id_proof'        => $result->id_proof,
-                                    // 'resume'          => base_url('assets/api/doc/' . $result->resume),
-                                    'resume'          => ($resume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row()) ? base_url('assets/api/doc/' . $resume->resume) : NULL,
-                                    'skill'           => $result->skill,
-                                    'highest_education'  => $result->highest_education,
-                                    'college_name'    => $result->college_name,
-                                    'degree'          => $result->degree,
-                                    'specialization'  => $result->specialization,
-                                    'education_type'  => $result->education_type,
-                                    'comp_year'       => $result->comp_year,
-                                    'pref_work_type'  => $result->pref_work_type, 'pref_job_city'   => $result->pref_job_city,
-                                    'is_active'       => $result->is_active,
-                                    'is_verify'       => $result->is_verify,
-                                    'created_at'      => $result->created_at,
-                                    'updated_at'      => $result->updated_at,
+                                // $this->responseData['data']         = [
+
+                                //     'user_avatar'          => ($user_avatar = $this->CommonModel->getRecord('user', array('id' => $user_id))->row()) ? base_url('assets/api/images/' . $user_avatar->user_avatar) : NULL,
+
+                                //     'first_name'      => $result->first_name,
+                                //     'last_name'       => $result->last_name,
+                                //     'dob'             => $result->dob,
+                                //     'email'           => $result->email,
+                                //     'mobile'          => $result->mobile,
+                                //     'id_proof'        => $result->id_proof,
+                                //     // 'resume'          => base_url('assets/api/doc/' . $result->resume),
+                                //     'resume'          => ($resume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row()) ? base_url('assets/api/doc/' . $resume->resume) : NULL,
+                                //     'skill'           => $result->skill,
+                                //     'highest_education'  => $result->highest_education,
+                                //     'college_name'    => $result->college_name,
+                                //     'degree'          => $result->degree,
+                                //     'specialization'  => $result->specialization,
+                                //     'education_type'  => $result->education_type,
+                                //     'comp_year'       => $result->comp_year,
+                                //     'pref_work_type'  => $result->pref_work_type, 'pref_job_city'   => $result->pref_job_city,
+                                //     'is_active'       => $result->is_active,
+                                //     'is_verify'       => $result->is_verify,
+                                //     'created_at'      => $result->created_at,
+                                //     'updated_at'      => $result->updated_at,
+                                // ];
+                                $this->responseData['user_avatar']   = ($user_avatar = $this->CommonModel->getRecord('user', array('id' => $user_id))->row()) ? base_url('assets/api/images/' . $user_avatar->user_avatar) : NULL;
+
+                                $this->responseData['basic_details'] = [
+                                    'first_name'      => ($getBasicDetails) ? $getBasicDetails->first_name : NULL,
+                                    'last_name'       => ($getBasicDetails) ? $getBasicDetails->last_name : NULL,
+                                    'dob'             => ($getBasicDetails) ? $getBasicDetails->dob : NULL,
+                                    'gender'          => ($getBasicDetails) ? $getBasicDetails->gender : NULL,
+                                    'email'           => ($getBasicDetails) ? $getBasicDetails->email : NULL,
+                                    'mobile'          => ($getBasicDetails) ? $getBasicDetails->mobile : NULL,
+                                    'id_proof'        => ($getBasicDetails) ? $getBasicDetails->id_proof : NULL,
+                                    'is_active'       => ($getBasicDetails) ? $getBasicDetails->is_active : NULL,
+                                    'is_verify'       => ($getBasicDetails) ? $getBasicDetails->is_verify : NULL,
+                                ];
+
+                                $this->responseData['resume'] = ($resume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row()) ? base_url('assets/api/doc/' . $resume->resume) : NULL;
+
+                                $this->responseData['skill_info'] = [
+                                    'skill'           => ($getSkillsInfo) ? $getSkillsInfo->skill : NULL,
+                                ];
+
+                                $this->responseData['education_info'] = [
+                                    'highest_education'  => ($getEducationInfo) ? $getEducationInfo->highest_education : NULL,
+                                    'college_name'       => ($getEducationInfo) ? $getEducationInfo->college_name : NULL,
+                                    'degree'             => ($getEducationInfo) ? $getEducationInfo->degree : NULL,
+                                    'specialization'     => ($getEducationInfo) ? $getEducationInfo->specialization : NULL,
+                                    'education_type'     => ($getEducationInfo) ? $getEducationInfo->education_type : NULL,
+                                    'comp_year'          => ($getEducationInfo) ? $getEducationInfo->comp_year : NULL,
+                                ];
+
+                                $this->responseData['job_info'] = [
+                                    'pref_work_type'    => ($getSkillsInfo) ? $getSkillsInfo->pref_work_type : NULL,
+                                    'pref_job_city'     => ($getSkillsInfo) ? $getSkillsInfo->pref_job_city : NULL,
                                 ];
                             } else {
                                 $this->responseData['code']    = 404;
@@ -1979,6 +2140,115 @@ class SeekkMobile extends CI_Controller
             $this->responseData['code']    = 400;
             $this->responseData['status']  = 'failed';
             $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+
+    /*
+     * Update or add user profile photo
+     */
+    public function updateUserAvatar()
+    {
+        $json_data = json_decode(file_get_contents("php://input"));
+        $api_key           = $json_data->api_key;
+        $user_id           = $json_data->user_id;
+        $user_avatar       = $json_data->user_avatar;
+
+        if ($json_data) {
+            // $api_key = $this->input->post('api_key');
+            $api_key = $json_data->api_key;
+
+            if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                $reqData = $json_data;
+                $reqData = (array) $reqData;
+
+                if (!empty($user_id)) {
+
+                    $this->form_validation->set_data($reqData);
+                    $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+
+                    if ($this->form_validation->run() == TRUE) {
+
+                        $userData['id']             = $user_id;
+                        $userData['user_avatar']    = $user_avatar;
+                        $userData['updated_at']     = strtotime(date('d-m-Y'));
+
+                        $rand  = rand(10, 10000);
+                        $image = preg_replace('#^data:image/[^;]+;base64,#', '',  $userData['user_avatar']);
+                        $name               = $this->DIR . $rand . 'image.png';
+                        $new                = file_put_contents($name, base64_decode($image));
+                        $userData['user_avatar'] = $rand . 'image.png';
+
+                        if ($user_id) {
+
+                            $getRecord          = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+
+                            if (!empty($getRecord)) {
+                                if (empty($getRecord['user_avatar'])) {
+                                    $this->CommonModel->update('user', array('user_avatar' => $userData['user_avatar']), array('id' => $user_id));
+                                } else {
+                                    unlink($this->DIR . $getRecord['user_avatar']);
+                                }
+                                $result = $this->CommonModel->update('user', $userData, array('id' => $user_id));
+
+                                if ($result) {
+                                    $this->responseData['code']         = 200;
+                                    $this->responseData['status']       = 'success';
+                                    $this->responseData['img_url']   = base_url('assets/api/images/' . $userData['user_avatar']);
+                                    // $this->responseData['data']         = $result;
+                                    $this->responseData['message']      = "Updated successfully.";
+                                } else {
+                                    $this->responseData['code']    = 401;
+                                    $this->responseData['status']  = 'failed';
+                                    $this->responseData['message'] = 'Wrong User';
+                                    unset($this->responseData['data']);
+                                }
+                            } elseif (!empty($getRecord)) {
+                                $result = $this->CommonModel->update('user', $userData, array('id' => $user_id));
+                                if ($result) {
+                                    $this->responseData['code']         = 200;
+                                    $this->responseData['status']       = 'success';
+                                    $this->responseData['img_url']      = base_url('assets/api/images/' . $userData['user_avatar']);
+                                    // $this->responseData['data']         = $result;
+                                    $this->responseData['message']      = "Updated successfully.";
+                                } else {
+                                    $this->responseData['code']    = 401;
+                                    $this->responseData['status']  = 'failed';
+                                    $this->responseData['message'] = 'Wrong User';
+                                    unset($this->responseData['data']);
+                                }
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'Not found!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $this->responseData['code']    = 404;
+                            $this->responseData['message'] = 'Not found!';
+                            $this->responseData['status']  = 'failed';
+                        }
+                    } else {
+                        $msg = $this->ApiCommonModel->validationErrorMsg();
+                        $this->responseData['code']    = 400;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = $msg;
+                    }
+                } else {
+                    $this->responseData['code']    = 404;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Required param missing: user_id';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid api key!';
+            }
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Invalid request';
         }
 
         self::setOutPut();
