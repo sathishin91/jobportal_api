@@ -414,9 +414,13 @@ class SeekkMobile extends CI_Controller
 
                             if ($user_id) {
                                 $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
-                                $getEducationRecord = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array();
-                                $getEducationRecordId = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array()['id'];
 
+                                $getEducationRecord = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array();
+                                if (empty($getEducationRecord)) {
+                                    $getEducationRecordId = '';
+                                } else {
+                                    $getEducationRecordId = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array()['id'];
+                                }
                                 if (!empty($getRecord) && !empty($getEducationRecord)) {
                                     // $result = $this->UserModel->update('experience_info', $userData, array('user_id' => $user_id));
                                     $result = $this->UserModel->delete('experience_info', array('user_id' => $user_id));
