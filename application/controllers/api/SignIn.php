@@ -592,6 +592,118 @@ class SignIn extends CI_Controller
 		self::setOutPut();
 	}
 
+
+	/*
+     * job completion status
+     */
+	public function getJobStatusByJobId()
+	{
+		$isAuth = $this->ApiCommonModel->decodeToken();
+		if ($isAuth == 1) {
+			if (empty($json_data = json_decode(file_get_contents("php://input")))) {
+				$this->responseData['code']    = 404;
+				$this->responseData['status']  = 'failed';
+				$this->responseData['message'] = 'Required fields are missing';
+			} else {
+				$json_data  = json_decode(file_get_contents("php://input"));
+				$api_key    = $json_data->api_key;
+				$job_id     = $json_data->job_id;
+				$user_id    = $json_data->user_id;
+			}
+			if ($json_data) {
+				// $api_key = $this->input->post('api_key');
+				$api_key = $json_data->api_key;
+				$user_id = $json_data->user_id;
+				$job_id  = $json_data->job_id;
+
+				if ($this->ApiCommonModel->checkApiKey($api_key)) {
+					$reqData = $json_data;
+					$reqData = (array) $reqData;
+
+					if (!empty($user_id)) {
+
+						$this->form_validation->set_data($reqData);
+						$this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+						$this->form_validation->set_rules('job_id', 'Job Id', 'required|trim');
+
+						if ($this->form_validation->run() == TRUE) {
+							$getUser = $this->CommonModel->getRecord('user', array('id' => $user_id))->row_array();
+
+							if ($getUser) {
+								$getJob = $this->CommonModel->getRecord('job_details', array('id' => $job_id))->row();
+
+								if ($getJob) {
+									$getStatus = $this->CommonModel->getRecord('job_details', array('id' => $job_id, 'user_id' => $user_id))->row_array()['is_completed'];
+
+
+
+									if ($getStatus == 1) {
+										$this->responseData['code']         = 200;
+										// $this->responseData['status']         = 'success';
+										$this->responseData['message']      = "Job Details Found.";
+										$this->responseData['status']       = intval($getStatus);
+									} elseif ($getStatus == 2) {
+										$this->responseData['code']    = 401;
+										$this->responseData['status']  = 'failed';
+										$this->responseData['message'] = 'Till Candidate Preference Found.';
+										$this->responseData['status']       = intval($getStatus);
+									} elseif ($getStatus == 3) {
+										$this->responseData['code']    = 401;
+										$this->responseData['status']  = 'failed';
+										$this->responseData['message'] = 'Till Interviewer Preference found.';
+										$this->responseData['status']       = intval($getStatus);
+									} else {
+										$this->responseData['code']    = 401;
+										$this->responseData['status']  = 'failed';
+										$this->responseData['message'] = 'Status not fetched or no job data is present!';
+										unset($this->responseData['data']);
+									}
+								} else {
+									$this->responseData['code'] = 404;
+									$this->responseData['message'] = 'Not job found on this user id!';
+									$this->responseData['status']  = 'failed';
+								}
+							} else {
+								$this->responseData['code'] = 404;
+								$this->responseData['message'] = 'Not user found!';
+								$this->responseData['status']  = 'failed';
+							}
+						} else {
+							$msg = $this->ApiCommonModel->validationErrorMsg();
+							$this->responseData['code']    = 400;
+							$this->responseData['status']  = 'failed';
+							$this->responseData['message'] = $msg;
+						}
+					} else {
+						$this->responseData['code']    = 404;
+						$this->responseData['status']  = 'failed';
+						$this->responseData['message'] = 'Required param missing';
+					}
+				} else {
+					$this->responseData['code']    = 400;
+					$this->responseData['status']  = 'failed';
+					$this->responseData['message'] = 'Invalid api key!';
+				}
+			} else {
+				$this->responseData['code']    = 400;
+				$this->responseData['status']  = 'failed';
+				$this->responseData['message'] = 'Invalid request';
+			}
+		} elseif ($isAuth == 0) {
+			$this->responseData['code']    = 400;
+			$this->responseData['status']  = 'failed';
+			$this->responseData['message'] = 'Token is invalid or expired!';
+		} else {
+			$this->responseData['code']    = 400;
+			$this->responseData['status']  = 'failed';
+			$this->responseData['message'] = 'Bearer Token required!';
+		}
+
+		self::setOutPut();
+	}
+
+
+
 	// public function sendSms()
 	// {
 
