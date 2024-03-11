@@ -430,7 +430,7 @@ class JobDetails extends CI_Controller
                                     $this->responseData['code']         = 200;
                                     $this->responseData['status']       = 'success';
                                     // $this->responseData['job_id']       = $result;
-                                    // $this->responseData['job_details']  = $this->JobDetailsModel->getRecord('job_details', array('id' => $result))->row_array();
+                                    // $this->responseData['job_details']  = $this->JobDetailsModel->getRecord('jobeditJobProfile_details', array('id' => $result))->row_array();
                                     $this->responseData['message']      = "Updated successfully.";
                                 } else {
                                     $this->responseData['code']    = 401;
@@ -764,6 +764,8 @@ class JobDetails extends CI_Controller
         if ($isAuth == 1) {
             $json_data = json_decode(file_get_contents("php://input"));
             $api_key     = $json_data->api_key;
+            $job_id     = $json_data->job_id;
+
 
             if (isset($json_data)) {
                 $api_key = $json_data->api_key;
@@ -772,19 +774,58 @@ class JobDetails extends CI_Controller
                     $reqData = $json_data;
                     $reqData = (array) $reqData;
 
-                    if (!empty($reqData['id'])) {
+                    if (!empty($reqData['job_id'])) {
                         $this->form_validation->set_data($reqData);
-                        $this->form_validation->set_rules('id', 'Id', 'required');
+                        $this->form_validation->set_rules('job_id', 'Job Id', 'required');
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $val = 'job_details.*, job_location.address_no, job_location.location_type, job_location.location_type_name, job_location.wh_city, job_location.wh_address, job_location.wh_address2, job_location.wo_place,job_location.wo_city,job_location.fj_area,
-                        
-                        candidate_req.education,candidate_req.experience,candidate_req.eng_lvl,candidate_req.description,
-                            
-                        interviewer_info.com_pref,interviewer_info.com_pref_fn,interviewer_info.com_pref_mob,interviewer_info.noti_pref,interviewer_info.noti_pref_fn,interviewer_info.noti_pref_mob,interviewer_info.interview_method,
-                        
-                      ';
+                            // $val = 'job_details.*, job_location.address_no, job_location.location_type, job_location.location_type_name, job_location.wo_place, job_location.wo_city, job_location.wh_address, job_location.wh_address2,job_location.wh_city,
+
+                            //         jd_location.work_location_type, jd_location.wl_country, jd_location.wl_state, jd_location.wl_pincode, jd_location.wl_latitude, jd_location.wl_longitude, jd_location.wl_same_reg_address,
+
+
+                            // candidate_req.gender,
+                            // candidate_req.min_age,
+                            // candidate_req.max_age,
+                            // candidate_req.is_preference,
+                            // candidate_req.qualification,
+                            // candidate_req.experience_type,
+                            // candidate_req.min_experience,
+                            // candidate_req.any_experience,
+                            // candidate_req.skills,
+                            // candidate_req.app_location_type,
+                            // candidate_req.notice_period,
+                            // candidate_req.language,
+                            // candidate_req.eng_lvl,
+
+                            //         cp_location.app_location_name,cp_location.al_country,cp_location.al_state,cp_location.al_city,
+
+                            // interviewer_info.interview_type,
+                            // interviewer_info.interview_type_name,
+                            // interviewer_info.interview_location_type,
+                            // interviewer_info.w_interview_date_from,
+                            // interviewer_info.w_interview_date_to,
+                            // interviewer_info.w_interview_time_from,
+                            // interviewer_info.w_interview_time_to,
+                            // interviewer_info.t_interview_date,
+                            // interviewer_info.t_interview_time_from,
+                            // interviewer_info.t_interview_time_to,
+                            // interviewer_info.t_contact_person,
+                            // interviewer_info.t_contact_number,
+                            // interviewer_info.s_send_resume,
+                            // interviewer_info.s_email,
+
+                            //     ip_location.interview_location_name,ip_location.il_country,ip_location.il_state,ip_location.il_pincode,ip_location.il_latitude,ip_location.il_longitude,ip_location.same_reg_address,
+
+                            //   ';
+                            $val = 'job_details.*,
+
+                              job_location.location_type, job_location.location_type_name, job_location.wo_place, job_location.wo_city, job_location.wh_address, job_location.wh_address2,job_location.wh_city,
+
+                              jd_location.work_location_type, jd_location.wl_country, jd_location.wl_state, jd_location.wl_pincode, jd_location.wl_latitude, jd_location.wl_longitude, jd_location.same_reg_address,
+
+                              ';
 
                             $join = array(
                                 array('table' => 'user', 'condition' => 'job_details.address_no = job_location.address_no', 'jointype' => 'LEFT JOIN'),
@@ -796,7 +837,7 @@ class JobDetails extends CI_Controller
                             //     $likearray['check_in.user_id'] = $userData['user_id'];
                             // }
 
-                            $whereArray  = $reqData['id'];
+                            $whereArray  = $reqData['job_id'];
                             $result = $this->JobDetailsModel->getJoinById($val, $whereArray);
                             // print_r($result[0]->id);
                             // die();
@@ -812,48 +853,48 @@ class JobDetails extends CI_Controller
                                 $this->responseData['code']     = 200;
                                 $this->responseData['status']   = 'success';
                                 $this->responseData['message']  = "Fetched successfully.";
-                                // $this->responseData['data']         = $result;
-                                $this->responseData['id']              = intval($result[0]->id);
-                                $this->responseData['user_id']         = intval($result[0]->user_id);
-                                $this->responseData['company_name']    = $result[0]->company_name;
-                                // $this->responseData['designation']     = $this->JobDetailsModel->getRecord('designation',array('id'=>$result[0]->designation))->row_array()['designation'];
-                                $this->responseData['designation']     = ($result[0]->designation == null) ? null : intval($result[0]->designation);
-                                // $this->responseData['department']      = $this->JobDetailsModel->getRecord('department',array('id'=>$result[0]->department))->row_array()['department'];
-                                $this->responseData['department']      = ($result[0]->department == null) ? null : intval($result[0]->department);
-                                // $this->responseData['role']            = $this->JobDetailsModel->getRecord('category',array('id'=>$result[0]->role))->row_array()['category'];
-                                $this->responseData['role']            = ($result[0]->role == null) ? null : intval($result[0]->role);
-                                $this->responseData['job_type']        = ($result[0]->job_type == null) ? null : intval($result[0]->job_type);
-                                $this->responseData['night_shift']     = ($result[0]->night_shift == null) ? null : intval($result[0]->night_shift);
-                                $this->responseData['location_type']   = ($result[0]->location_type == null) ? null : intval($result[0]->location_type);
-                                $this->responseData['paytype']         = ($result[0]->paytype == null) ? null : intval($result[0]->paytype);
-                                $this->responseData['min_salary']      = ($result[0]->min_salary == null) ? null : intval($result[0]->min_salary);
-                                $this->responseData['max_salary']      = ($result[0]->max_salary == null) ? null : intval($result[0]->max_salary);
-                                $this->responseData['incentive']       = ($result[0]->incentive == null) ? null : intval($result[0]->incentive);
-                                $this->responseData['is_verify']       = ($result[0]->is_verify == null) ? null : intval($result[0]->is_verify);
-                                $this->responseData['create_date']     = $result[0]->create_date;
-                                $this->responseData['update_date']     = ($result[0]->updated_at != NULL) ? date('d-m-Y', $result[0]->updated_at) : NULL;
-                                $this->responseData['location_type_name']   = $result[0]->location_type_name;
-                                $this->responseData['wo_place']        = ($result[0]->wo_place == null) ? null : intval($result[0]->wo_place);
-                                $this->responseData['wo_city']         = ($result[0]->wo_city == null) ? null : intval($result[0]->wo_city);
-                                $this->responseData['wh_city']         = ($result[0]->wh_city == null) ? null : intval($result[0]->wh_city);
-                                $this->responseData['wh_address']      = $result[0]->wh_address;
-                                $this->responseData['wh_address2']     = $result[0]->wh_address2;
-                                $this->responseData['fj_area']         = $result[0]->fj_area;
-                                $this->responseData['education']       = ($result[0]->education == null) ? null : intval($result[0]->education);
-                                $this->responseData['experience']      = ($result[0]->experience == null) ? null : intval($result[0]->experience);
-                                $this->responseData['eng_lvl']         = ($result[0]->eng_lvl == null) ? null : intval($result[0]->eng_lvl);
-                                $this->responseData['description']     = $result[0]->description;
-                                $this->responseData['com_pref']        = ($result[0]->com_pref == null) ? null : intval($result[0]->com_pref);
-                                $this->responseData['com_pref_fn']     = $result[0]->com_pref_fn;
-                                $this->responseData['com_pref_mob']    = $result[0]->com_pref_mob;
-                                $this->responseData['noti_pref']       = ($result[0]->noti_pref == null) ? null : intval($result[0]->noti_pref);
-                                $this->responseData['noti_pref_fn']    = $result[0]->noti_pref_fn;
-                                $this->responseData['noti_pref_mob']   = $result[0]->noti_pref_mob;
-                                $this->responseData['interview_method'] = ($result[0]->interview_method == null) ? null : intval($result[0]->interview_method);
+                                $this->responseData['data']         = $result;
+                                // $this->responseData['id']              = intval($result[0]->id);
+                                // $this->responseData['user_id']         = intval($result[0]->user_id);
+                                // $this->responseData['company_name']    = $result[0]->company_name;
+                                // // $this->responseData['designation']     = $this->JobDetailsModel->getRecord('designation',array('id'=>$result[0]->designation))->row_array()['designation'];
+                                // $this->responseData['designation']     = ($result[0]->designation == null) ? null : intval($result[0]->designation);
+                                // // $this->responseData['department']      = $this->JobDetailsModel->getRecord('department',array('id'=>$result[0]->department))->row_array()['department'];
+                                // $this->responseData['department']      = ($result[0]->department == null) ? null : intval($result[0]->department);
+                                // // $this->responseData['role']            = $this->JobDetailsModel->getRecord('category',array('id'=>$result[0]->role))->row_array()['category'];
+                                // $this->responseData['role']            = ($result[0]->role == null) ? null : intval($result[0]->role);
+                                // $this->responseData['job_type']        = ($result[0]->job_type == null) ? null : intval($result[0]->job_type);
+                                // $this->responseData['night_shift']     = ($result[0]->night_shift == null) ? null : intval($result[0]->night_shift);
+                                // $this->responseData['location_type']   = ($result[0]->location_type == null) ? null : intval($result[0]->location_type);
+                                // $this->responseData['paytype']         = ($result[0]->paytype == null) ? null : intval($result[0]->paytype);
+                                // $this->responseData['min_salary']      = ($result[0]->min_salary == null) ? null : intval($result[0]->min_salary);
+                                // $this->responseData['max_salary']      = ($result[0]->max_salary == null) ? null : intval($result[0]->max_salary);
+                                // $this->responseData['incentive']       = ($result[0]->incentive == null) ? null : intval($result[0]->incentive);
+                                // $this->responseData['is_verify']       = ($result[0]->is_verify == null) ? null : intval($result[0]->is_verify);
+                                // $this->responseData['create_date']     = $result[0]->create_date;
+                                // $this->responseData['update_date']     = ($result[0]->updated_at != NULL) ? date('d-m-Y', $result[0]->updated_at) : NULL;
+                                // $this->responseData['location_type_name']   = $result[0]->location_type_name;
+                                // $this->responseData['wo_place']        = ($result[0]->wo_place == null) ? null : intval($result[0]->wo_place);
+                                // $this->responseData['wo_city']         = ($result[0]->wo_city == null) ? null : intval($result[0]->wo_city);
+                                // $this->responseData['wh_city']         = ($result[0]->wh_city == null) ? null : intval($result[0]->wh_city);
+                                // $this->responseData['wh_address']      = $result[0]->wh_address;
+                                // $this->responseData['wh_address2']     = $result[0]->wh_address2;
+                                // $this->responseData['fj_area']         = $result[0]->fj_area;
+                                // $this->responseData['education']       = ($result[0]->education == null) ? null : intval($result[0]->education);
+                                // $this->responseData['experience']      = ($result[0]->experience == null) ? null : intval($result[0]->experience);
+                                // $this->responseData['eng_lvl']         = ($result[0]->eng_lvl == null) ? null : intval($result[0]->eng_lvl);
+                                // $this->responseData['description']     = $result[0]->description;
+                                // $this->responseData['com_pref']        = ($result[0]->com_pref == null) ? null : intval($result[0]->com_pref);
+                                // $this->responseData['com_pref_fn']     = $result[0]->com_pref_fn;
+                                // $this->responseData['com_pref_mob']    = $result[0]->com_pref_mob;
+                                // $this->responseData['noti_pref']       = ($result[0]->noti_pref == null) ? null : intval($result[0]->noti_pref);
+                                // $this->responseData['noti_pref_fn']    = $result[0]->noti_pref_fn;
+                                // $this->responseData['noti_pref_mob']   = $result[0]->noti_pref_mob;
+                                // $this->responseData['interview_method'] = ($result[0]->interview_method == null) ? null : intval($result[0]->interview_method);
                             } else {
                                 $this->responseData['code']    = 401;
                                 $this->responseData['status']  = 'failed';
-                                $this->responseData['message'] = 'Not fetched credentials';
+                                $this->responseData['message'] = 'Not fetched successfully!';
                                 unset($this->responseData['data']);
                             }
                         } else {
@@ -896,7 +937,7 @@ class JobDetails extends CI_Controller
      *  get designation list
      */
 
-    public function getDesignationList()
+    public function getIndustryList()
     {
         $isAuth = $this->ApiCommonModel->decodeToken();
         if ($isAuth == 1) {
@@ -910,7 +951,7 @@ class JobDetails extends CI_Controller
                     $reqData = $json_data;
                     $reqData = (array) $reqData;
 
-                    $result = $this->JobDetailsModel->select_rec('designation', '*')->result_array();
+                    $result = $this->JobDetailsModel->select_rec('industry', '*')->result_array();
 
                     if ($result) {
                         $this->responseData['code']     = 200;
@@ -1043,7 +1084,7 @@ class JobDetails extends CI_Controller
      *  get category list
      */
 
-    public function getCategoryList()
+    public function getRoleList()
     {
         $isAuth = $this->ApiCommonModel->decodeToken();
         if ($isAuth == 1) {
@@ -1057,7 +1098,7 @@ class JobDetails extends CI_Controller
                     $reqData = $json_data;
                     $reqData = (array) $reqData;
 
-                    $result = $this->JobDetailsModel->select_rec('category', '*')->result_array();
+                    $result = $this->JobDetailsModel->select_rec('role', '*')->result_array();
 
                     if ($result) {
                         $this->responseData['code']     = 200;
@@ -1119,26 +1160,47 @@ class JobDetails extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $val = 'job_details.*, job_location.address_no, job_location.location_type, job_location.location_type_name, job_location.wh_city, job_location.wh_address, job_location.wh_address2, job_location.wo_place,job_location.wo_city,job_location.fj_area,
+                            $val = 'job_details.*, job_location.address_no, job_location.location_type, job_location.location_type_name, job_location.wo_place, job_location.wo_city, job_location.wh_address, job_location.wh_address2,job_location.wh_city,
                         
-                        candidate_req.education,candidate_req.experience,candidate_req.eng_lvl,candidate_req.description,
+                        candidate_req.gender,
+                        candidate_req.min_age,
+                        candidate_req.max_age,
+                        candidate_req.is_preference,
+                        candidate_req.qualification,
+                        candidate_req.experience_type,
+                        candidate_req.min_experience,
+                        candidate_req.any_experience,
+                        candidate_req.skills,
+                        candidate_req.app_location_type,
+                        candidate_req.notice_period,
+                        candidate_req.language,
+                        candidate_req.eng_lvl,
                         
-                        interviewer_info.com_pref,interviewer_info.com_pref_fn,interviewer_info.com_pref_mob,interviewer_info.noti_pref,interviewer_info.noti_pref_fn,interviewer_info.noti_pref_mob,interviewer_info.interview_method,
+                        interviewer_info.interview_type,
+                        interviewer_info.interview_type_name,
+                        interviewer_info.interview_location_type,
+                        interviewer_info.w_interview_date_from,
+                        interviewer_info.w_interview_date_to,
+                        interviewer_info.w_interview_time_from,
+                        interviewer_info.w_interview_time_to,
+                        interviewer_info.t_interview_date,
+                        interviewer_info.t_interview_time_from,
+                        interviewer_info.t_interview_time_to,
+                        interviewer_info.t_contact_person,
+                        interviewer_info.t_contact_number,
+                        interviewer_info.s_send_resume,
+                        interviewer_info.s_email,
                         
-                        designation.designation,department.department,category.category,
-                        
-                        education.education,experience.experience,eng_lvl.eng_lvl';
+                        industry.industry_name,department.department_name,role.role_name,
+                        ';
 
                             $join = array(
                                 array('table' => 'job_location', 'condition' => 'job_location.address_no = job_details.address_no', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'candidate_req', 'condition' => 'candidate_req.job_id = job_details.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'interviewer_info', 'condition' => 'interviewer_info.job_id = job_details.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'designation', 'condition' => 'job_details.designation = designation.id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'industry', 'condition' => 'job_details.industry = industry.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'department', 'condition' => 'job_details.department = department.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'category', 'condition' => 'job_details.role = category.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'education', 'condition' => 'candidate_req.education = education.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'experience', 'condition' => 'candidate_req.experience = experience.id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'eng_lvl', 'condition' => 'candidate_req.eng_lvl = eng_lvl.id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'role', 'condition' => 'job_details.role = role.id', 'jointype' => 'LEFT JOIN'),
                             );
 
                             // $likearray = null;
@@ -1155,13 +1217,13 @@ class JobDetails extends CI_Controller
                             if ($result) {
                                 foreach ($result as $res) {
 
-                                    if ($res['job_type'] == 1) {
-                                        $job_type = "FULL TIME";
-                                    } elseif ($res['job_type'] == 2) {
-                                        $job_type = "PART TIME";
-                                    } else {
-                                        $job_type = "BOTH (Full Time & Part Time)";
-                                    }
+                                    // if ($res['job_type'] == 1) {
+                                    //     $job_type = "FULL TIME";
+                                    // } elseif ($res['job_type'] == 2) {
+                                    //     $job_type = "PART TIME";
+                                    // } else {
+                                    //     $job_type = "BOTH (Full Time & Part Time)";
+                                    // }
 
                                     $this->responseData['code']     = 200;
                                     $this->responseData['status']   = 'success';
@@ -1313,7 +1375,7 @@ class JobDetails extends CI_Controller
      *  get Job profile by mobile no
      */
 
-    public function getJobProfile()
+    public function getProfileByMob()
     {
         $isAuth = $this->ApiCommonModel->decodeToken();
         if ($isAuth == 1) {
@@ -1342,15 +1404,18 @@ class JobDetails extends CI_Controller
                             if ($result) {
                                 $this->responseData['code']     = 200;
                                 $this->responseData['status']   = 'success';
-                                $this->responseData['message']  = 'Fetched';
-                                $this->responseData['user_id']           = intval($result['id']);
-                                $this->responseData['mobile']            = intval($result['mobile']);
-                                $this->responseData['company_name']      = $result['company_name'];
-                                $this->responseData['email']             = $result['email'];
-                                $this->responseData['website']           = $result['website'];
-                                $this->responseData['no_of_employees']   = intval($result['no_of_employees']);
-                                $this->responseData['is_company']        = intval($result['is_company']);
-                                $this->responseData['is_accept']         = intval($result['is_accept']);
+                                $this->responseData['message']  = 'Fetched Successfully.';
+                                $this->responseData['message']  = $result;
+
+
+                                // $this->responseData['user_id']           = intval($result['id']);
+                                // $this->responseData['mobile']            = intval($result['mobile']);
+                                // $this->responseData['company_name']      = $result['company_name'];
+                                // $this->responseData['email']             = $result['email'];
+                                // $this->responseData['website']           = $result['website'];
+                                // $this->responseData['no_of_employees']   = intval($result['no_of_employees']);
+                                // $this->responseData['is_company']        = intval($result['is_company']);
+                                // $this->responseData['is_accept']         = intval($result['is_accept']);
                             } else {
                                 $this->responseData['code']    = 404;
                                 $this->responseData['status']  = 'failed';
@@ -1398,7 +1463,7 @@ class JobDetails extends CI_Controller
     /*
      * Edit Job profile
      */
-    public function editJobProfile()
+    public function editProfile()
     {
         $isAuth = $this->ApiCommonModel->decodeToken();
         if ($isAuth == 1) {
@@ -1414,8 +1479,9 @@ class JobDetails extends CI_Controller
                 $company_name    = $json_data->company_name;
                 $email           = $json_data->email;
                 $website         = $json_data->website;
-                $no_of_employees = $json_data->no_of_employees;
-                $is_company      = $json_data->is_company;
+                $company_size    = $json_data->company_size;
+                $gst             = $json_data->gst;
+                $company_des     = $json_data->company_des;
             }
             if ($json_data) {
                 // $api_key = $this->input->post('api_key');
@@ -1435,8 +1501,9 @@ class JobDetails extends CI_Controller
                             $jobData['company_name']       = $company_name;
                             $jobData['email']              = $email;
                             $jobData['website']            = $website;
-                            $jobData['no_of_employees']    = $no_of_employees;
-                            $jobData['is_company']         = $is_company;
+                            $jobData['company_size']       = $company_size;
+                            $jobData['gst']                = $gst;
+                            $jobData['company_des']        = $company_des;
                             $jobData['updated_at']         = strtotime(date('d-m-Y'));
 
                             if ($mobile && $role_id) {
@@ -1455,12 +1522,13 @@ class JobDetails extends CI_Controller
                                         $this->responseData['company_name']     = $company_name;
                                         $this->responseData['email']            = $email;
                                         $this->responseData['website']          = $website;
-                                        $this->responseData['no_of_employees']  = intval($no_of_employees);
-                                        $this->responseData['is_company']       = intval($is_company);
+                                        $this->responseData['company_size']     = intval($company_size);
+                                        $this->responseData['gst']              = intval($gst);
+                                        $this->responseData['company_des']      = intval($company_des);
                                     } else {
                                         $this->responseData['code']    = 401;
                                         $this->responseData['status']  = 'failed';
-                                        $this->responseData['message'] = 'Wrong User';
+                                        $this->responseData['message'] = 'No user found!';
                                         unset($this->responseData['data']);
                                     }
                                 } else {
