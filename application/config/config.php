@@ -23,7 +23,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://localhost/codeigniter/seekk_api/seekk_api/api/';
+$config['base_url'] = 'https://sktexus.com/seekk_api/api/';
 
 /*
 |--------------------------------------------------------------------------
