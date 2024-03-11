@@ -114,7 +114,7 @@ class SignUp extends CI_Controller
                             $userData['gst']                  = $gst;
 
                             $userData['is_active']          = 1;
-                            $userData['is_verify']          = 1;
+                            $userData['is_verify']          = 2;
                             $userData['is_registered']      = 1;
                             $userData['created_at']         = strtotime(date("d-m-Y"));
 

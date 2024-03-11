@@ -359,7 +359,7 @@ class SignIn extends CI_Controller
 								// }
 
 								//account verify
-								if ($result['is_verify'] == 2) {
+								if ($result['is_verify'] == 0) {
 									$this->responseData['code']    = 401;
 									$this->responseData['status']  = 'error';
 									$this->responseData['message'] = "Your account is not verify, please verify.";
