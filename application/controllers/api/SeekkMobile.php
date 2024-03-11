@@ -1981,7 +1981,7 @@ class SeekkMobile extends CI_Controller
                                 //     'created_at'      => $result->created_at,
                                 //     'updated_at'      => $result->updated_at,
                                 // ];
-                                $this->responseData['user_avatar']   = ($user_avatar = $this->CommonModel->getRecord('user', array('id' => $user_id))->row()) ? base_url('assets/api/images/' . $user_avatar->user_avatar) : NULL;
+                                $this->responseData['user_avatar']   = ($user_avatar = $this->CommonModel->getRecord('user', array('id' => $user_id))->row_array()['user_avatar']) ? base_url('assets/api/images/' . $user_avatar->user_avatar) : NULL;
 
                                 $this->responseData['basic_details'] = [
                                     'first_name'      => ($getBasicDetails) ? $getBasicDetails->first_name : NULL,
