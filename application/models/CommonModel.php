@@ -325,8 +325,13 @@ class CommonModel extends CI_Model
 			->select($val)
 			->from("job_details")
 			->join("job_location", "job_location.address_no = job_details.address_no")
-			->join("candidate_req", "candidate_req.job_id = job_details.id")
-			->join("interviewer_info", "interviewer_info.job_id = job_details.id")
+			->join("jd_location", "jd_location.address_no   = job_details.address_no")
+
+			// ->join("candidate_req", "candidate_req.job_id = job_details.id")
+			// ->join("cp_location", " cp_location.address_no = candidate_req.address_no")
+
+			// ->join("interviewer_info", "interviewer_info.job_id = job_details.id")
+			// ->join("ip_location", " ip_location.address_no = interviewer_info.address_no")
 
 			->where('job_details.id', $id)
 			->get();

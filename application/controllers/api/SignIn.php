@@ -64,6 +64,8 @@ class SignIn extends CI_Controller
 		if ($isAuth == 1) {
 			$json_data = json_decode(file_get_contents("php://input"));
 			$api_key   = $json_data->api_key;
+			$role_id   = $json_data->role_id;
+
 
 			if (isset($json_data)) {
 				$api_key = $json_data->api_key;
@@ -114,7 +116,7 @@ class SignIn extends CI_Controller
 
 									if ($reqData['role_id'] == 3) {
 										//account verify
-										if ($result['is_verify'] == 0) {
+										if ($result['is_verify'] == 2) {
 											$this->responseData['code']    = 400;
 											$this->responseData['status']  = 'error';
 											$this->responseData['message'] = "Your account is not verify, please verify.";
@@ -240,11 +242,14 @@ class SignIn extends CI_Controller
 								$updateUserData['created_at']         = strtotime(date('d-m-Y'));
 								$updateUserData['token']              = 'seekk' . now() . $this->UserModel->generateRandomString();
 								$updateUserData['is_registered']      = 0;
-								$updateUserData['is_verify']          = 2;
 								$updateUserData['is_active']          = 1;
 
-
 								//update otp in db
+								if ($role_id == 3) {
+									$updateUserData['is_verify']          = 2;
+								} else {
+									$updateUserData['is_verify']          = 1;
+								}
 								$this->UserModel->insert($this->UserModel->table, $updateUserData);
 
 								//send sms
@@ -254,7 +259,7 @@ class SignIn extends CI_Controller
 								if ($updateUserData['is_verify'] == 0) {
 									$this->responseData['code']    = 400;
 									$this->responseData['status']  = 'error';
-									$this->responseData['message'] = "Your account is not verify, please verify.";
+									$this->responseData['message'] = "Please verify your account first!";
 								} elseif ($updateUserData['is_active'] == 0) {
 									$this->responseData['code']    = 400;
 									$this->responseData['status']  = 'error';
@@ -524,7 +529,7 @@ class SignIn extends CI_Controller
 							$jobData['mobile']       = $mobile;
 
 							if ($mobile) {
-								$result = $this->JobDetailsModel->getRecord('user', array('mobile' => $mobile))->row_array();
+								$result = $this->CommonModel->getRecord('user', array('mobile' => $mobile))->row_array();
 
 								// if (!empty($getRecord)) {
 								if ($result) {
