@@ -116,7 +116,7 @@ class SignIn extends CI_Controller
 
 									if ($reqData['role_id'] == 3) {
 										//account verify
-										if ($result['is_verify'] == 2) {
+										if ($result['is_verify'] == 0) {
 											$this->responseData['code']    = 400;
 											$this->responseData['status']  = 'error';
 											$this->responseData['message'] = "Your account is not verify, please verify.";
@@ -359,7 +359,7 @@ class SignIn extends CI_Controller
 								// }
 
 								//account verify
-								if ($result['is_verify'] == 0) {
+								if ($result['is_verify'] == 2) {
 									$this->responseData['code']    = 401;
 									$this->responseData['status']  = 'error';
 									$this->responseData['message'] = "Your account is not verify, please verify.";
@@ -385,7 +385,9 @@ class SignIn extends CI_Controller
 											'is_verify'            => intval($result['is_verify']),
 											'is_registered'        =>  intval($result['is_registered']),
 											'is_compOrConstOrPers' =>  intval($result['is_compOrConstOrPers']),
-											'no_of_employees'      =>  intval($result['no_of_employees']),
+											'company_size'         =>  intval($result['company_size']),
+											'contact_person'       =>  intval($result['contact_person']),
+											'designation'       =>  intval($result['designation']),
 											'gst'                  => $result['gst'],
 											'is_terms_condition'   =>  intval($result['is_terms_condition']),
 											'is_completed'         =>  intval($result['is_completed']),
@@ -401,7 +403,10 @@ class SignIn extends CI_Controller
 											'is_verify'            => intval($result['is_verify']),
 											'is_registered'        =>  intval($result['is_registered']),
 											'is_compOrConstOrPers' =>  intval($result['is_compOrConstOrPers']),
-											'no_of_employees'      =>  intval($result['no_of_employees']),
+											'company_size'      =>  intval($result['company_size']),
+											'contact_person'       =>  intval($result['contact_person']),
+											'designation'       =>  intval($result['designation']),
+											'gst'                  => $result['gst'],
 											'is_terms_condition'   =>  intval($result['is_terms_condition']),
 											'is_completed'         =>  intval($result['is_completed']),
 										];

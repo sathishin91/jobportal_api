@@ -839,8 +839,6 @@ class JobDetails extends CI_Controller
 
                             $whereArray  = $reqData['job_id'];
                             $result = $this->JobDetailsModel->getJoinById($val, $whereArray);
-                            // print_r($result[0]->id);
-                            // die();
 
                             if ($result) {
                                 //  if($result[0]->job_type == 1){
@@ -1406,7 +1404,6 @@ class JobDetails extends CI_Controller
                                 $this->responseData['status']   = 'success';
                                 $this->responseData['message']  = 'Fetched Successfully.';
                                 $this->responseData['message']  = $result;
-
 
                                 // $this->responseData['user_id']           = intval($result['id']);
                                 // $this->responseData['mobile']            = intval($result['mobile']);
