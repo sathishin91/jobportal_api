@@ -90,15 +90,16 @@ class SeekkMobile extends CI_Controller
                             $userData['is_registered']      = 1;
                             $userData['is_completed']       = 1;
 
-                            $rand  = rand(10, 10000);
-                            $image = preg_replace('#^data:image/[^;]+;base64,#', '', $img);
+                            if ($img) {
+                                $rand  = rand(10, 10000);
+                                $image = preg_replace('#^data:image/[^;]+;base64,#', '', $img);
 
-                            $name               = $this->DIR . $rand . 'image.png';
-                            $new                = file_put_contents($name, base64_decode($image));
-                            $userData['user_avatar'] = $rand . 'image.png';
-
-                            // print_r($userData);
-                            // die();
+                                $name               = $this->DIR . $rand . 'image.png';
+                                $new                = file_put_contents($name, base64_decode($image));
+                                $userData['user_avatar'] = $rand . 'image.png';
+                            } else {
+                                $userData['user_avatar'] = NULL;
+                            }
 
                             if ($user_id) {
                                 $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
@@ -118,7 +119,7 @@ class SeekkMobile extends CI_Controller
                                         if ($userData['user_avatar']) {
                                             $this->responseData['img_url']  = base_url('assets/api/images/' . $userData['user_avatar']);
                                         } else {
-                                            $this->responseData['img_url']  = base_url('assets/api/images/');
+                                            $this->responseData['img_url']  = NULL;
                                         }
                                         $this->responseData['message']      = "Added successfully.";
                                     } else {
