@@ -860,6 +860,7 @@ class SeekkMobile extends CI_Controller
                                 }
 
 
+
                                 $getEduInfoStatus      = $this->UserModel->getRecord('education_info', array('user_id' => $user_id))->row();
                                 if ($getEduInfoStatus == NULL) {
                                     $getEduInfoStatus = 0;
@@ -886,27 +887,23 @@ class SeekkMobile extends CI_Controller
 
                                 $final = $getUserInfoStatus + $getEduInfoStatus + $getExpInfoStatus + $getSkillsInfoStatus;
 
-                                if ($final) {
-                                    // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
-
-                                    if (!empty($final)) {
-                                        $this->responseData['code']         = 200;
-                                        $this->responseData['status']       = 'success';
-                                        $this->responseData['completion_status']         = $final;
-                                        if ($final == 1) {
-                                            $this->responseData['message']      = "Basic info.";
-                                        } elseif ($final == 2) {
-                                            $this->responseData['message']      = "Education info.";
-                                        } elseif ($final == 3) {
-                                            $this->responseData['message']      = "Experience info.";
-                                        } elseif ($final == 4) {
-                                            $this->responseData['message']      = "Skill info.";
-                                        }
-                                    } else {
-                                        $this->responseData['code']    = 401;
-                                        $this->responseData['status']  = 'failed';
-                                        $this->responseData['message'] = 'Wrong User';
-                                        unset($this->responseData['data']);
+                                if ($final == 0) {
+                                    $this->responseData['code']         = 200;
+                                    $this->responseData['status']       = 'success';
+                                    $this->responseData['completion_status']  = $final;
+                                    $this->responseData['message']      = "No info found!";
+                                } elseif ($final > 0) {
+                                    $this->responseData['code']         = 200;
+                                    $this->responseData['status']       = 'success';
+                                    $this->responseData['completion_status']  = $final;
+                                    if ($final == 1) {
+                                        $this->responseData['message']      = "Basic info.";
+                                    } elseif ($final == 2) {
+                                        $this->responseData['message']      = "Education info.";
+                                    } elseif ($final == 3) {
+                                        $this->responseData['message']      = "Experience info.";
+                                    } elseif ($final == 4) {
+                                        $this->responseData['message']      = "Skill info.";
                                     }
                                 } else {
                                     $this->responseData['code']    = 404;
