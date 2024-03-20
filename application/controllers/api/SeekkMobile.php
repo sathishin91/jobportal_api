@@ -69,7 +69,7 @@ class SeekkMobile extends CI_Controller
                         $this->form_validation->set_data($reqData);
                         $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
                         $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
-                        $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
+                        // $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
                         $this->form_validation->set_rules('email', 'Email', 'required|trim');
                         $this->form_validation->set_rules('gender', 'Gender', 'required|trim');
                         $this->form_validation->set_rules('dob', 'Date of Birth', 'required|trim');
@@ -986,6 +986,7 @@ class SeekkMobile extends CI_Controller
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
                                 $this->responseData['message']      = 'Job list fetched successfully.';
+                                // $this->responseData['logo_url']     =  base_url('assets/api/logo/');
                                 $this->responseData['data']         = $result;
                             } else {
                                 $this->responseData['code']    = 404;
@@ -1477,7 +1478,7 @@ class SeekkMobile extends CI_Controller
                                         $this->responseData['code']         = 200;
                                         $this->responseData['status']       = 'success';
                                         // $this->responseData['data']         = $result;
-                                        $this->responseData['doc_url']      = base_url('assets/api/doc/');
+                                        $this->responseData['doc_url']      = base_url('assets/api/doc/' . $userData['resume']);
                                         $this->responseData['message']      = "Updated successfully.";
                                     } else {
                                         $this->responseData['code']    = 401;
@@ -2111,7 +2112,11 @@ class SeekkMobile extends CI_Controller
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
                                 $this->responseData['message']      = 'Job list fetched successfully.';
-                                $this->responseData['data']         = $result;
+                                if ($skill == "") {
+                                    $this->responseData['data']         = [];
+                                } else {
+                                    $this->responseData['data']         = $result;
+                                }
                             } else {
                                 $this->responseData['code']    = 404;
                                 $this->responseData['message'] = 'Not fetched successfully!';
@@ -2258,5 +2263,173 @@ class SeekkMobile extends CI_Controller
         }
 
         self::setOutPut();
+    }
+
+
+    /**
+     *  get department list
+     */
+
+    public function getDepartmentList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('department', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+
+    /**
+     *  get department list
+     */
+
+    public function getRoleList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('role', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+
+    /**
+     *  get designation list
+     */
+
+    public function getIndustryList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('industry', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
     }
 }

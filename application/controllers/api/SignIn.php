@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
+include_once './vendor/autoload.php';
 
+use \Firebase\JWT\JWT;
 
 class SignIn extends CI_Controller
 {
@@ -89,6 +91,17 @@ class SignIn extends CI_Controller
 							$result = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array();
 
 							if ($result) {
+								//token generate
+								$secretKey = "seekk!@#$%2023";
+								// Payload data (e.g., user ID, username, etc.)
+								$payloadData = [
+									'iss' => 'localhost',
+									'aud' => 'localhost',
+									'iat' => time(),
+									'exp' => time() + 3600, // Token expiration time (1 hour from now)
+								];
+								// Create the token
+								$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
 
 								$role   = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['role_id'];
 
@@ -131,6 +144,12 @@ class SignIn extends CI_Controller
 											$this->responseData['message']   = "OTP sent successfully.";
 											// $this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
 											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+											if ($jwtToken) {
+												$this->responseData['token']  = $jwtToken;
+											} else {
+												$this->responseData['msg']    = "no token";
+											}
 											// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $role))->row_array()['role_constant'];
 											// $this->responseData['token']    = $updateUserData['token'];
 											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
@@ -175,6 +194,12 @@ class SignIn extends CI_Controller
 											$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
 											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
 											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+
+											if ($jwtToken) {
+												$this->responseData['token']  = $jwtToken;
+											} else {
+												$this->responseData['msg']    = "no token";
+											}
 											// $this->responseData['token']     = $updateUserData['token'];
 											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
 											// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
@@ -217,6 +242,12 @@ class SignIn extends CI_Controller
 											$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
 											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
 											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+
+											if ($jwtToken) {
+												$this->responseData['token']  = $jwtToken;
+											} else {
+												$this->responseData['msg']    = "no token";
+											}
 											// $this->responseData['token']     = $updateUserData['token'];
 											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
 											// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
@@ -271,6 +302,12 @@ class SignIn extends CI_Controller
 									$this->responseData['message']   = "OTP sent successfully.";
 									$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
 									$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+									$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
+									if ($jwtToken) {
+										$this->responseData['token']  = $jwtToken;
+									} else {
+										$this->responseData['msg']    = "no token";
+									}
 									// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $reqData['role_id']))->row_array()['role_constant'];
 									// // $this->responseData['token']  = $updateUserData['token'];
 									// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
@@ -745,4 +782,6 @@ class SignIn extends CI_Controller
 
 	// 	curl_close($ch);
 	// }
+
+
 }

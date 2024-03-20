@@ -8,8 +8,6 @@ use \Firebase\JWT\Key;
 class Auth extends CI_Controller
 {
     // public $responseData = array('code' => 200, 'status' => 'success', 'message' => 'You have registered successfully'); // set API response array
-    public $customerRoleId    = null;
-    public $DIR   = 'assets/images/';
     public function __construct()
     {
         parent::__construct();
