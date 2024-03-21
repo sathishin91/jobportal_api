@@ -669,11 +669,16 @@ class SeekkMobile extends CI_Controller
                                         $userData['document'] = $rand . 'doc.pdf';
 
                                         $res = $this->CommonModel->insert('documents', $userData);
-
                                         if ($res) {
-                                            $this->responseData['code']    = 200;
-                                            $this->responseData['message'] = 'Uploaded Successfully.';
-                                            $this->responseData['status']  = 'Success';
+                                            $this->responseData['code']         = 200;
+                                            $this->responseData['status']       = 'success';
+                                            $this->responseData['message']      = "Uploaded successfully.";
+                                            $this->responseData['data']         = $res;
+                                        } else {
+                                            $this->responseData['code']    = 401;
+                                            $this->responseData['status']  = 'failed';
+                                            $this->responseData['message'] = 'Not uploaded successfully.';
+                                            unset($this->responseData['data']);
                                         }
                                     }
                                 } else {
@@ -2799,5 +2804,195 @@ class SeekkMobile extends CI_Controller
             $this->responseData['message'] = 'Bearer Token required!';
         }
         SELF::setOutPut();
+    }
+
+    /*
+     * Update Employee Experience Info
+     */
+    public function editExperienceInfo()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key           = $json_data->api_key;
+            $user_id           = $json_data->user_id;
+            $experience        = $json_data->experience;
+            //if experience is 1
+            $total_experience_month = $json_data->total_experience_month;
+            $total_experience_year  = $json_data->total_experience_year;
+            $job_title              = $json_data->job_title;
+            $department             = $json_data->department;
+            $category               = $json_data->category;
+            $company_name           = $json_data->company_name;
+            $industry               = $json_data->industry;
+            $current_work           = $json_data->current_work;
+            //if current_work is 1
+            $current_salary         = $json_data->current_salary; //common
+            $employment_type        = $json_data->employment_type; //common
+            $notice_period          = $json_data->notice_period;
+            $start_date             = $json_data->start_date; //common
+            //if current_work is 0
+            $end_date               = $json_data->end_date;
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($user_id)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
+                        $this->form_validation->set_rules('experience', 'Experience', 'required|trim');
+
+                        if ($experience == 1) {
+                            $this->form_validation->set_rules('total_experience_month', 'Total Experience', 'required|trim');
+                            $this->form_validation->set_rules('job_title', 'Job Title', 'required|trim');
+                            $this->form_validation->set_rules('department', 'Department', 'required|trim');
+                            $this->form_validation->set_rules('category', 'Category', 'required|trim');
+                            $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
+                            $this->form_validation->set_rules('industry', 'Industry', 'required|trim');
+                            $this->form_validation->set_rules('current_work', 'Current Work', 'required|trim');
+
+                            if ($current_work == 1) {
+                                $this->form_validation->set_rules('current_salary', 'Current Salary', 'required|trim');
+                                $this->form_validation->set_rules('employment_type', 'Employment Type', 'required|trim');
+                                $this->form_validation->set_rules('notice_period', 'Notice Period', 'required|trim');
+                                $this->form_validation->set_rules('start_date', 'Start Date', 'required|trim');
+                            } else {
+                                $this->form_validation->set_rules('current_salary', 'Current Salary', 'required|trim');
+                                $this->form_validation->set_rules('employment_type', 'Employment Type', 'required|trim');
+                                $this->form_validation->set_rules('start_date', 'Start Date', 'required|trim');
+                                $this->form_validation->set_rules('end_date', 'End Date', 'required|trim');
+                            }
+                        }
+
+                        if ($this->form_validation->run() == TRUE) {
+
+                            $userData['user_id']       = $user_id;
+                            $userData['experience']    = $experience;
+
+                            if ($experience == 1) {
+                                $userData['total_experience_month']    = $total_experience_month;
+                                $userData['total_experience_year']     = $total_experience_year;
+                                $userData['job_title']           = $job_title;
+                                $userData['department']          = $department;
+                                $userData['category']            = $category;
+                                $userData['company_name']        = $company_name;
+                                $userData['industry']            = $industry;
+                                $userData['current_work']        = $current_work;
+
+                                if ($userData['current_work'] == 1) {
+                                    $userData['current_salary']   = $current_salary;
+                                    $userData['employment_type']  = $employment_type;
+                                    $userData['notice_period']    = $notice_period;
+                                    $userData['start_date']       = $start_date;
+                                } else {
+                                    $userData['current_salary']   = $current_salary;
+                                    $userData['employment_type']  = $employment_type;
+                                    $userData['start_date']       = $start_date;
+                                    $userData['end_date']         = $end_date;
+                                }
+                            } else {
+                                $userData['total_experience_month']    = NULL;
+                                $userData['total_experience_year']     = NULL;
+                                $userData['job_title']           = NULL;
+                                $userData['department']          = NULL;
+                                $userData['category']            = NULL;
+                                $userData['company_name']        = NULL;
+                                $userData['industry']            = NULL;
+                                $userData['current_work']        = NULL;
+                                $userData['current_salary']   = NULL;
+                                $userData['employment_type']  = NULL;
+                                $userData['notice_period']    = NULL;
+                                $userData['start_date']       = NULL;
+                                $userData['end_date']         = NULL;
+                            }
+
+                            $userData['updated_at']         = strtotime(date('d-m-Y'));
+                            $userData['is_completed']       = 1;
+
+                            if ($user_id) {
+                                $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+
+                                $getEducationRecord = $this->UserModel->getRecord('experience_info', array('user_id' => $user_id))->row_array();
+
+                                if (!empty($getRecord) && !empty($getEducationRecord)) {
+
+                                    $result = $this->UserModel->update('experience_info', $userData, array('user_id' => $user_id));
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } elseif (!empty($getRecord) && empty($getEducationRecord)) {
+
+
+                                    $result = $this->UserModel->insert('experience_info', $userData);
+
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } else {
+                                    $this->responseData['code'] = 404;
+                                    $this->responseData['message'] = 'Not found User!';
+                                    $this->responseData['status']  = 'failed';
+                                }
+                            } else {
+                                $this->responseData['code'] = 404;
+                                $this->responseData['message'] = 'Not found ';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: user_id';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
     }
 }
