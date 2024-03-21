@@ -2432,4 +2432,334 @@ class SeekkMobile extends CI_Controller
         }
         SELF::setOutPut();
     }
+
+    /**
+     *  get degreee list
+     */
+
+    public function getDegreeList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('degree', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+    /**
+     *  get specialization list
+     */
+
+    public function getSpecializationList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('specialization', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+    /**
+     *  get skills list
+     */
+
+    public function getSkillList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('skill', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+    /**
+     *  get language list
+     */
+
+    public function getLanguageList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('languages', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+    /**
+     *  get city list
+     */
+
+    public function getCityList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('city', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
+
+    /**
+     *  get employment list
+     */
+
+    public function getEmpTypeList()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+            $api_key     = $json_data->api_key;
+
+            if (isset($json_data)) {
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    $result = $this->CommonModel->select_rec('employment_type', '*')->result_array();
+
+                    if ($result) {
+                        $this->responseData['code']     = 200;
+                        $this->responseData['status']   = 'success';
+                        $this->responseData['data']     = $result;
+                        $this->responseData['message']  = "Fetched successfully.";
+                    } else {
+                        $this->responseData['code']    = 4001;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Not fetched';
+                        unset($this->responseData['data']);
+                    }
+                } else {
+                    $this->responseData['code']    = 401;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 401;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid Request';
+                unset($this->responseData['data']);
+            }
+            unset($json_data);
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+        SELF::setOutPut();
+    }
 }
