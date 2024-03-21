@@ -97,8 +97,9 @@ class SignIn extends CI_Controller
 								$payloadData = [
 									'iss' => 'localhost',
 									'aud' => 'localhost',
-									'iat' => time(),
-									'exp' => time() + 3600, // Token expiration time (1 hour from now)
+									// 'iat' => time(),
+									// 'exp' => time() + 3600, 
+									// Token expiration time (1 hour from now)
 								];
 								// Create the token
 								$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
