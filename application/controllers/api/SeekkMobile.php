@@ -669,10 +669,11 @@ class SeekkMobile extends CI_Controller
                                         $userData['document'] = $rand . 'doc.pdf';
 
                                         $res = $this->CommonModel->insert('documents', $userData);
+
                                         if ($res) {
                                             $this->responseData['code']    = 200;
                                             $this->responseData['message'] = 'Uploaded Successfully.';
-                                            $this->responseData['status']  = 'failed';
+                                            $this->responseData['status']  = 'Success';
                                         }
                                     }
                                 } else {
@@ -1947,10 +1948,19 @@ class SeekkMobile extends CI_Controller
 
                             $getEducationInfo = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row();
 
+                            $getExperienceInfo = $this->CommonModel->getRecord('experience_info', array('user_id' => $user_id))->row();
+
+                            if ($getExperienceInfo == NULL) {
+                                $getExperienceInfo == "";
+                            }
+
+                            // print_r($getExperienceInfo);
+                            // die();
+
                             // $checkSkillsInfo    = $this->CommonModel->select('skill_info', array('user_id' => $user_id))->row();
                             // $checkEducationInfo = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row();
 
-                            if ($getBasicDetails || $getSkillsInfo || $getEducationInfo) {
+                            if ($getBasicDetails || $getSkillsInfo || $getEducationInfo || $getExperienceInfo) {
 
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
@@ -2017,6 +2027,34 @@ class SeekkMobile extends CI_Controller
                                     'pref_work_type'    => ($getSkillsInfo) ? $getSkillsInfo->pref_work_type : NULL,
                                     'pref_job_city'     => ($getSkillsInfo) ? $getSkillsInfo->pref_job_city : NULL,
                                 ];
+
+                                if ($getExperienceInfo != "") {
+                                    if ($getExperienceInfo->experience == 1) {
+                                        $this->responseData['experience_info'] = [
+                                            'experience' => 1,
+                                            'total_experience_month'    => ($getExperienceInfo) ? $getExperienceInfo->total_experience_month : NULL,
+                                            'total_experience_year'     => ($getExperienceInfo) ? $getExperienceInfo->total_experience_year : NULL,
+                                            'job_title'     => ($getExperienceInfo) ? $getExperienceInfo->job_title : NULL,
+                                            'department'     => ($getExperienceInfo) ? $getExperienceInfo->department : NULL,
+                                            'category'     => ($getExperienceInfo) ? $getExperienceInfo->category : NULL,
+                                            'company_name'     => ($getExperienceInfo) ? $getExperienceInfo->company_name : NULL,
+                                            'industry'     => ($getExperienceInfo) ? $getExperienceInfo->industry : NULL,
+                                            'current_work'     => ($getExperienceInfo) ? $getExperienceInfo->current_work : NULL,
+                                            'current_salary'     => ($getExperienceInfo) ? $getExperienceInfo->current_salary : NULL,
+                                            'employment_type'     => ($getExperienceInfo) ? $getExperienceInfo->employment_type : NULL,
+                                            'notice_period'     => ($getExperienceInfo) ? $getExperienceInfo->notice_period : NULL,
+                                            'start_date'     => ($getExperienceInfo) ? $getExperienceInfo->start_date : NULL,
+                                            'end_date'     => ($getExperienceInfo) ? $getExperienceInfo->end_date : NULL,
+
+                                        ];
+                                    } else {
+                                        $this->responseData['experience_info'] = [
+                                            'experience' => 0
+                                        ];
+                                    }
+                                } else {
+                                    $this->responseData['experience_info'] = [];
+                                }
                             } else {
                                 $this->responseData['code']    = 404;
                                 $this->responseData['message'] = 'No user data found!';
@@ -2119,7 +2157,7 @@ class SeekkMobile extends CI_Controller
                                 }
                             } else {
                                 $this->responseData['code']    = 404;
-                                $this->responseData['message'] = 'Not fetched successfully!';
+                                $this->responseData['message'] = 'No job found!';
                                 $this->responseData['status']  = 'failed';
                             }
                         } else {

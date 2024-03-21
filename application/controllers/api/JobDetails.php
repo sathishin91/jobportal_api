@@ -4,8 +4,10 @@ defined('BASEPATH') or exit('No direct script access allowed');
 class JobDetails extends CI_Controller
 {
     public $responseData = array('code' => 200, 'status' => 'success', 'message' => 'Your have registered successfully'); // set API response array
-    public $customerRoleId    = null;
-    public $DIR   = 'assets/images/';
+    public $customerRoleId = null;
+    public $DIR            = 'assets/images/';
+    public $DIR_LOGO       = 'assets/api/logo/';
+
     public function __construct()
     {
         parent::__construct();
@@ -142,7 +144,6 @@ class JobDetails extends CI_Controller
 
                                 $result = $this->JobDetailsModel->insert('job_details', $jobData);
                                 // job details end
-
 
                                 // location details
                                 if ($location_type != 1 && $location_type == 2 && $location_type != 3) {
@@ -1479,6 +1480,7 @@ class JobDetails extends CI_Controller
                 $company_size    = $json_data->company_size;
                 $gst             = $json_data->gst;
                 $company_des     = $json_data->company_des;
+                $logo            = $json_data->logo;
             }
             if ($json_data) {
                 // $api_key = $this->input->post('api_key');
@@ -1503,12 +1505,27 @@ class JobDetails extends CI_Controller
                             $jobData['company_des']        = $company_des;
                             $jobData['updated_at']         = strtotime(date('d-m-Y'));
 
+                            if ($logo) {
+                                $rand  = rand(10, 10000);
+                                $image = preg_replace('#^data:image/[^;]+;base64,#', '', $logo);
+
+                                $name               = $this->DIR_LOGO . $rand . 'logo.png';
+                                $new                = file_put_contents($name, base64_decode($image));
+                                $jobData['user_avatar'] = $rand . 'logo.png';
+                            } else {
+                                $jobData['user_avatar'] = NULL;
+                            }
+
                             if ($mobile && $role_id) {
                                 $getRecord = $this->JobDetailsModel->getRecord('user', array('mobile' => $mobile, 'role_id' => $role_id))->row_array();
 
                                 if (!empty($getRecord)) {
 
                                     $result = $this->JobDetailsModel->update('user', $jobData, array('mobile' => $mobile, 'role_id' => $role_id));
+
+                                    $logo_url = base_url() . 'assets/api/logo' . $jobData['user_avatar'];
+
+                                    $result = $this->JobDetailsModel->update('job_details', array('logo_url' =>   $logo_url), array('user_id' => $getRecord['id']));
 
                                     if ($result) {
                                         $this->responseData['code']           = 200;
