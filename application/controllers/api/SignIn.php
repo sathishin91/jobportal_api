@@ -62,291 +62,280 @@ class SignIn extends CI_Controller
      */
 	public function login()
 	{
-		$isAuth = $this->ApiCommonModel->decodeToken();
-		if ($isAuth == 1) {
-			$json_data = json_decode(file_get_contents("php://input"));
-			$api_key   = $json_data->api_key;
-			$role_id   = $json_data->role_id;
+		$json_data = json_decode(file_get_contents("php://input"));
+		$api_key   = $json_data->api_key;
+		$role_id   = $json_data->role_id;
 
+		if (isset($json_data)) {
+			$api_key = $json_data->api_key;
 
-			if (isset($json_data)) {
-				$api_key = $json_data->api_key;
+			if ($this->ApiCommonModel->checkApiKey($api_key)) {
+				$reqData = $json_data;
+				$reqData = (array) $reqData;
 
-				if ($this->ApiCommonModel->checkApiKey($api_key)) {
-					$reqData = $json_data;
-					$reqData = (array) $reqData;
+				if (isset($reqData['mobile']) && $reqData['mobile'])
 
-					if (isset($reqData['mobile']) && $reqData['mobile'])
+					$reqData['mobile'] = $reqData['mobile'];
 
-						$reqData['mobile'] = $reqData['mobile'];
+				if (!empty($reqData['mobile'])) {
+					$role    = NULL;
 
-					if (!empty($reqData['mobile'])) {
-						$role    = NULL;
+					$this->form_validation->set_data($reqData);
+					$this->form_validation->set_rules('mobile', 'mobile', 'required');
 
-						$this->form_validation->set_data($reqData);
-						$this->form_validation->set_rules('mobile', 'mobile', 'required');
+					if ($this->form_validation->run() == TRUE) {
 
-						if ($this->form_validation->run() == TRUE) {
+						$result = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array();
 
-							$result = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array();
+						if ($result) {
+							//token generate
+							$secretKey = "seekk!@#$%2023";
+							// Payload data (e.g., user ID, username, etc.)
+							$payloadData = [
+								'iss' => 'localhost',
+								'aud' => 'localhost',
+								// 'iat' => time(),
+								// 'exp' => time() + 3600, 
+								// Token expiration time (1 hour from now)
+							];
+							// Create the token
+							$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
 
-							if ($result) {
-								//token generate
-								$secretKey = "seekk!@#$%2023";
-								// Payload data (e.g., user ID, username, etc.)
-								$payloadData = [
-									'iss' => 'localhost',
-									'aud' => 'localhost',
-									// 'iat' => time(),
-									// 'exp' => time() + 3600, 
-									// Token expiration time (1 hour from now)
-								];
-								// Create the token
-								$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
+							$role   = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['role_id'];
 
-								$role   = $this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['role_id'];
-
-								if ($role == 3) {
-									// for registered employer users 
-									//generate otp
-
-									$otp                          = $this->generateOtp();
-									$updateUserData['otp_code']   = $otp;
-									$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
-									$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
-
-									//update otp in db
-									$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 3));
-
-									//send sms
-									// $send = $this->CommonModel->send_sms('8871249919', $otp);
-									// if ($send) {
-									// 	echo 'sent';
-									// 	die();
-									// } else {
-									// 	echo 'not sent';
-									// 	die();
-									// }
-
-									if ($reqData['role_id'] == 3) {
-										//account verify
-										if ($result['is_verify'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is not verify, please verify.";
-										} elseif ($result['is_active'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is deactive, please contact to admin.";
-										} else {
-											unset($result['mobile']);
-											$this->responseData['code']   	 = 200;
-											$this->responseData['status'] 	 = 'success';
-											$this->responseData['message']   = "OTP sent successfully.";
-											// $this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
-											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
-											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
-											if ($jwtToken) {
-												$this->responseData['token']  = $jwtToken;
-											} else {
-												$this->responseData['msg']    = "no token";
-											}
-											// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $role))->row_array()['role_constant'];
-											// $this->responseData['token']    = $updateUserData['token'];
-											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
-											// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
-										}
-									} else {
-										$this->responseData['code']    = 404;
-										$this->responseData['status']  = 'error';
-										$this->responseData['message'] = "Already taken, try with another mobile no.!";
-									}
-								} elseif ($role == 4) {
-									// for registered employee users
-									//generate otp
-
-									$otp                          = $this->generateOtp();
-									$updateUserData['otp_code']   = $otp;
-									$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
-									$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
-
-									//update otp in db
-									$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 4));
-
-									//send sms
-									// $this->sendSms($otp, $reqData['mobile']);
-
-									if ($reqData['role_id'] == 4) {
-
-										//account verify
-										if ($result['is_verify'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is not verify, please verify.";
-										} elseif ($result['is_active'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is deactive, please contact to admin.";
-										} else {
-											unset($result['mobile']);
-											$this->responseData['code']   	 = 200;
-											$this->responseData['status'] 	 = 'success';
-											$this->responseData['message']   = "OTP sent successfully.";
-											$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
-											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
-											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
-
-											if ($jwtToken) {
-												$this->responseData['token']  = $jwtToken;
-											} else {
-												$this->responseData['msg']    = "no token";
-											}
-											// $this->responseData['token']     = $updateUserData['token'];
-											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
-											// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
-										}
-									} else {
-										$this->responseData['code']    = 404;
-										$this->responseData['status']  = 'error';
-										$this->responseData['message'] = "Already taken, try with another mobile no.!";
-									}
-								} elseif ($role == 5) {
-									// for registered employee users
-									//generate otp
-									$otp                          = $this->generateOtp();
-									$updateUserData['otp_code']   = $otp;
-									$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
-									$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
-
-									//update otp in db
-									$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 5));
-
-									//send sms
-									// $this->sendSms($otp, $reqData['mobile']);
-
-									if ($reqData['role_id'] == 5) {
-
-										//account verify
-										if ($result['is_verify'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is not verify, please verify.";
-										} elseif ($result['is_active'] == 0) {
-											$this->responseData['code']    = 400;
-											$this->responseData['status']  = 'error';
-											$this->responseData['message'] = "Your account is deactive, please contact to admin.";
-										} else {
-											unset($result['mobile']);
-											$this->responseData['code']   	 = 200;
-											$this->responseData['status'] 	 = 'success';
-											$this->responseData['message']   = "OTP sent successfully.";
-											$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
-											$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
-											$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
-
-											if ($jwtToken) {
-												$this->responseData['token']  = $jwtToken;
-											} else {
-												$this->responseData['msg']    = "no token";
-											}
-											// $this->responseData['token']     = $updateUserData['token'];
-											// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
-											// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
-										}
-									} else {
-										$this->responseData['code']    = 404;
-										$this->responseData['status']  = 'error';
-										$this->responseData['message'] = "Already taken, try with another mobile no.!";
-									}
-								}
-							} else {
-								// 			$this->responseData['code']    = 401;
-								// 			$this->responseData['status']  = 'failed';
-								// 			$this->responseData['message'] = 'Mobile number is wrong';
-								// 			unset($this->responseData['data']);
-
-								// for not registered users
+							if ($role == 3) {
+								// for registered employer users 
 								//generate otp
-								$updateUserData['mobile']             = $reqData['mobile'];
-								$updateUserData['role_id']            = $reqData['role_id'];
-								$otp                                  = $this->generateOtp();
-								$updateUserData['otp_code']           = $otp;
-								$updateUserData['created_at']         = strtotime(date('d-m-Y'));
-								$updateUserData['token']              = 'seekk' . now() . $this->UserModel->generateRandomString();
-								$updateUserData['is_registered']      = 0;
-								$updateUserData['is_active']          = 1;
+
+								$otp                          = $this->generateOtp();
+								$updateUserData['otp_code']   = $otp;
+								$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
+								$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
 
 								//update otp in db
-								if ($role_id == 3) {
-									$updateUserData['is_verify']          = 2;
+								$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 3));
+
+								//send sms
+								// $send = $this->CommonModel->send_sms('8871249919', $otp);
+								// if ($send) {
+								// 	echo 'sent';
+								// 	die();
+								// } else {
+								// 	echo 'not sent';
+								// 	die();
+								// }
+
+								if ($reqData['role_id'] == 3) {
+									//account verify
+									if ($result['is_verify'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is not verify, please verify.";
+									} elseif ($result['is_active'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is deactive, please contact to admin.";
+									} else {
+										unset($result['mobile']);
+										$this->responseData['code']   	 = 200;
+										$this->responseData['status'] 	 = 'success';
+										$this->responseData['message']   = "OTP sent successfully.";
+										// $this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
+										$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+										$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+										if ($jwtToken) {
+											$this->responseData['token']  = $jwtToken;
+										} else {
+											$this->responseData['msg']    = "no token";
+										}
+										// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $role))->row_array()['role_constant'];
+										// $this->responseData['token']    = $updateUserData['token'];
+										// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
+										// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
+									}
 								} else {
-									$updateUserData['is_verify']          = 1;
+									$this->responseData['code']    = 404;
+									$this->responseData['status']  = 'error';
+									$this->responseData['message'] = "Already taken, try with another mobile no.!";
 								}
-								$this->UserModel->insert($this->UserModel->table, $updateUserData);
+							} elseif ($role == 4) {
+								// for registered employee users
+								//generate otp
+
+								$otp                          = $this->generateOtp();
+								$updateUserData['otp_code']   = $otp;
+								$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
+								$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
+
+								//update otp in db
+								$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 4));
 
 								//send sms
 								// $this->sendSms($otp, $reqData['mobile']);
 
-								//account verify
-								if ($updateUserData['is_verify'] == 0) {
-									$this->responseData['code']    = 400;
-									$this->responseData['status']  = 'error';
-									$this->responseData['message'] = "Please verify your account first!";
-								} elseif ($updateUserData['is_active'] == 0) {
-									$this->responseData['code']    = 400;
-									$this->responseData['status']  = 'error';
-									$this->responseData['message'] = "Your account is deactive, please contact to admin.";
-								} else {
-									unset($result['mobile']);
-									$this->responseData['code']   	 = 200;
-									$this->responseData['status'] 	 = 'success';
-									$this->responseData['message']   = "OTP sent successfully.";
-									$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
-									$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
-									$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
-									if ($jwtToken) {
-										$this->responseData['token']  = $jwtToken;
+								if ($reqData['role_id'] == 4) {
+
+									//account verify
+									if ($result['is_verify'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is not verify, please verify.";
+									} elseif ($result['is_active'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is deactive, please contact to admin.";
 									} else {
-										$this->responseData['msg']    = "no token";
+										unset($result['mobile']);
+										$this->responseData['code']   	 = 200;
+										$this->responseData['status'] 	 = 'success';
+										$this->responseData['message']   = "OTP sent successfully.";
+										$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
+										$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+										$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+
+										if ($jwtToken) {
+											$this->responseData['token']  = $jwtToken;
+										} else {
+											$this->responseData['msg']    = "no token";
+										}
+										// $this->responseData['token']     = $updateUserData['token'];
+										// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
+										// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
 									}
-									// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $reqData['role_id']))->row_array()['role_constant'];
-									// // $this->responseData['token']  = $updateUserData['token'];
-									// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
-									// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
+								} else {
+									$this->responseData['code']    = 404;
+									$this->responseData['status']  = 'error';
+									$this->responseData['message'] = "Already taken, try with another mobile no.!";
+								}
+							} elseif ($role == 5) {
+								// for registered employee users
+								//generate otp
+								$otp                          = $this->generateOtp();
+								$updateUserData['otp_code']   = $otp;
+								$updateUserData['updated_at'] = strtotime(date('d-m-Y'));
+								$updateUserData['token']      = 'seekk' . now() . $this->UserModel->generateRandomString();
+
+								//update otp in db
+								$this->UserModel->update($this->UserModel->table, $updateUserData, array('mobile' => $reqData['mobile'], 'role_id' => 5));
+
+								//send sms
+								// $this->sendSms($otp, $reqData['mobile']);
+
+								if ($reqData['role_id'] == 5) {
+
+									//account verify
+									if ($result['is_verify'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is not verify, please verify.";
+									} elseif ($result['is_active'] == 0) {
+										$this->responseData['code']    = 400;
+										$this->responseData['status']  = 'error';
+										$this->responseData['message'] = "Your account is deactive, please contact to admin.";
+									} else {
+										unset($result['mobile']);
+										$this->responseData['code']   	 = 200;
+										$this->responseData['status'] 	 = 'success';
+										$this->responseData['message']   = "OTP sent successfully.";
+										$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
+										$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+										$this->responseData['user_id']   = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['id']);
+
+										if ($jwtToken) {
+											$this->responseData['token']  = $jwtToken;
+										} else {
+											$this->responseData['msg']    = "no token";
+										}
+										// $this->responseData['token']     = $updateUserData['token'];
+										// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
+										// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
+									}
+								} else {
+									$this->responseData['code']    = 404;
+									$this->responseData['status']  = 'error';
+									$this->responseData['message'] = "Already taken, try with another mobile no.!";
 								}
 							}
 						} else {
-							$msg = $this->ApiCommonModel->validationErrorMsg();
-							$this->responseData['code']    = 400;
-							$this->responseData['status']  = 'failed';
-							$this->responseData['message'] = $msg;
+							// 			$this->responseData['code']    = 401;
+							// 			$this->responseData['status']  = 'failed';
+							// 			$this->responseData['message'] = 'Mobile number is wrong';
+							// 			unset($this->responseData['data']);
+
+							// for not registered users
+							//generate otp
+							$updateUserData['mobile']             = $reqData['mobile'];
+							$updateUserData['role_id']            = $reqData['role_id'];
+							$otp                                  = $this->generateOtp();
+							$updateUserData['otp_code']           = $otp;
+							$updateUserData['created_at']         = strtotime(date('d-m-Y'));
+							$updateUserData['token']              = 'seekk' . now() . $this->UserModel->generateRandomString();
+							$updateUserData['is_registered']      = 0;
+							$updateUserData['is_active']          = 1;
+
+							//update otp in db
+							if ($role_id == 3) {
+								$updateUserData['is_verify']          = 2;
+							} else {
+								$updateUserData['is_verify']          = 1;
+							}
+							$this->UserModel->insert($this->UserModel->table, $updateUserData);
+
+							//send sms
+							// $this->sendSms($otp, $reqData['mobile']);
+
+							//account verify
+							if ($updateUserData['is_verify'] == 0) {
+								$this->responseData['code']    = 400;
+								$this->responseData['status']  = 'error';
+								$this->responseData['message'] = "Please verify your account first!";
+							} elseif ($updateUserData['is_active'] == 0) {
+								$this->responseData['code']    = 400;
+								$this->responseData['status']  = 'error';
+								$this->responseData['message'] = "Your account is deactive, please contact to admin.";
+							} else {
+								unset($result['mobile']);
+								$this->responseData['code']   	 = 200;
+								$this->responseData['status'] 	 = 'success';
+								$this->responseData['message']   = "OTP sent successfully.";
+								$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
+								$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+								$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
+								if ($jwtToken) {
+									$this->responseData['token']  = $jwtToken;
+								} else {
+									$this->responseData['msg']    = "no token";
+								}
+								// $this->responseData['user_role'] = $this->CommonModel->getRecord('user_role', array('id' => $reqData['role_id']))->row_array()['role_constant'];
+								// // $this->responseData['token']  = $updateUserData['token'];
+								// $this->responseData['is_verify'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_verify']);
+								// $this->responseData['is_registered'] = intval($this->UserModel->getRecord($this->UserModel->table, array('mobile' => $reqData['mobile']))->row_array()['is_registered']);
+							}
 						}
 					} else {
-						$this->responseData['code']    = 404;
+						$msg = $this->ApiCommonModel->validationErrorMsg();
+						$this->responseData['code']    = 400;
 						$this->responseData['status']  = 'failed';
-						$this->responseData['message'] = 'Required param missing: mobile no. required';
+						$this->responseData['message'] = $msg;
 					}
 				} else {
-					$this->responseData['code']    = 400;
+					$this->responseData['code']    = 404;
 					$this->responseData['status']  = 'failed';
-					$this->responseData['message'] = 'Invalid api key!';
+					$this->responseData['message'] = 'Required param missing: mobile no. required';
 				}
 			} else {
 				$this->responseData['code']    = 400;
 				$this->responseData['status']  = 'failed';
-				$this->responseData['message'] = 'Invalid request';
-				unset($this->responseData['data']);
+				$this->responseData['message'] = 'Invalid api key!';
 			}
-			unset($json_data);
-		} elseif ($isAuth == 0) {
-			$this->responseData['code']    = 400;
-			$this->responseData['status']  = 'failed';
-			$this->responseData['message'] = 'Token is invalid or expired!';
 		} else {
 			$this->responseData['code']    = 400;
 			$this->responseData['status']  = 'failed';
-			$this->responseData['message'] = 'Bearer Token required!';
+			$this->responseData['message'] = 'Invalid request';
+			unset($this->responseData['data']);
 		}
+		unset($json_data);
+
 		SELF::setOutPut();
 	}
 
