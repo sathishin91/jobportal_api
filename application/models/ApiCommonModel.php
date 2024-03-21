@@ -74,17 +74,17 @@ class ApiCommonModel extends CommonModel
 			}
 
 			// Check the expiration time in the decoded token
-			$expirationTime = $decodedToken->exp;
+			// $expirationTime = $decodedToken->exp;
 
 			// Compare the expiration time with the current time
-			$currentTime = time();
+			// $currentTime = time();
 
-			if ($expirationTime < $currentTime) {
-				// echo 'Token has expired';
-				return 0;
-			} else {
-				return 1;
-			}
+			// if ($expirationTime < $currentTime) {
+			// 	// echo 'Token has expired';
+			// 	return 0;
+			// } else {
+			return 1;
+			// }
 		} else {
 			return 3;
 		}
