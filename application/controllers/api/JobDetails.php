@@ -273,46 +273,57 @@ class JobDetails extends CI_Controller
     /*
      * Update job details
      */
+
     public function edit()
     {
         $isAuth = $this->ApiCommonModel->decodeToken();
         if ($isAuth == 1) {
+
             if (empty($json_data = json_decode(file_get_contents("php://input")))) {
                 $this->responseData['code']    = 404;
                 $this->responseData['status']  = 'failed';
                 $this->responseData['message'] = 'Required fields are missing';
             } else {
                 $json_data  = json_decode(file_get_contents("php://input"));
+
+                // print_r($json_data);
+                // die();
+                $job_id     = $json_data->job_id;
                 $api_key    = $json_data->api_key;
                 //job details
-                $job_id          = $json_data->job_id;
                 $user_id         = $json_data->user_id;
-                $company_name    = $json_data->company_name;
-                $designation     = $json_data->designation;
+                $job_title       = $json_data->job_title;
+                $industry        = $json_data->industry;
                 $department      = $json_data->department;
                 $role            = $json_data->role;
                 $job_type        = $json_data->job_type;
-                $night_shift     = $json_data->night_shift;
+                // $night_shift     = $json_data->night_shift;
                 $add_perks       = $json_data->add_perks;
-                $joining_fee     = $json_data->joining_fee;
-                $comments        = $json_data->comments;
+                $job_des         = $json_data->job_des;
 
-                //compensation
-                $paytype         = $json_data->paytype;
+                //salary range
+                // $paytype         = $json_data->paytype;
                 $min_salary      = $json_data->min_salary;
                 $max_salary      = $json_data->max_salary;
-                $incentive       = $json_data->incentive;
+                // $incentive       = $json_data->incentive;
 
-                //location
+                //job location
                 $location_type   = $json_data->location_type;
                 $wh_city         = $json_data->wh_city;
                 $wh_address      = $json_data->wh_address;
                 $wh_address2     = $json_data->wh_address2;
                 $wo_place        = $json_data->wo_place;
                 $wo_city         = $json_data->wo_city;
-                $fj_area         = $json_data->fj_area;
-            }
+                // $fj_area         = $json_data->fj_area;
 
+                //work location
+                $work_location_type   = $json_data->work_location_type;
+                $wl_country           = $json_data->wl_country;
+                $wl_state             = $json_data->wl_state;
+                $wl_pincode           = $json_data->wl_pincode;
+                $wl_latitude          = $json_data->wl_latitude;
+                $wl_longitude         = $json_data->wl_longitude;
+            }
 
             if (isset($json_data)) {
                 $api_key = $json_data->api_key;
@@ -325,53 +336,41 @@ class JobDetails extends CI_Controller
 
                         //job details
                         $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('job_id', 'Job Id', 'required|trim');
                         $this->form_validation->set_rules('user_id', 'User Id', 'required|trim');
-                        $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
-                        $this->form_validation->set_rules('designation', 'Designation', 'required|trim');
+                        $this->form_validation->set_rules('job_title', 'Job Title', 'required|trim');
+                        $this->form_validation->set_rules('industry', 'Industry', 'required|trim');
                         $this->form_validation->set_rules('department', 'Department', 'required|trim');
                         $this->form_validation->set_rules('role', 'Role', 'required|trim');
                         $this->form_validation->set_rules('job_type', 'Job Type', 'required|trim');
-                        // $this->form_validation->set_rules('add_perks', 'Additions perks', 'required|trim');
-                        // $this->form_validation->set_rules('joining_fee', 'Joining fee', 'required|trim');
-                        // $this->form_validation->set_rules('comments', 'Comments', 'required|trim');
                         $this->form_validation->set_rules('location_type', 'Location Type', 'required|trim');
-                        $this->form_validation->set_rules('paytype', 'Pay Type', 'required|trim');
+                        $this->form_validation->set_rules('work_location_type', 'Work Location Type', 'required|trim');
 
 
                         if ($this->form_validation->run() == TRUE) {
                             // job details
-                            $jobData['user_id']           = $user_id;
-                            $jobData['company_name']      = $company_name;
-                            $jobData['designation']       = $designation;
-                            $jobData['department']        = $department;
-                            $jobData['role']              = $role;
-                            $jobData['job_type']          = $job_type;
-                            $jobData['night_shift']       = $night_shift;
-                            $jobData['perks']             = $add_perks;
-                            $jobData['joining_fee']       = $joining_fee;
-                            $jobData['comments']          = $comments;
-                            $jobData['location_type']     = $location_type;
-                            // $jobData['address_no']        = $this->JobDetailsModel->generate_unique_string(4);
-                            $jobData['is_active']         = 1;
-                            $jobData['is_verify']         = 1;
-                            $jobData['updated_at']        = strtotime(date('d-m-Y'));
-                            $jobData['update_date']       = date('d-m-Y');
-                            $jobData['is_completed']      = 1;
+                            $jobData['user_id']            = $user_id;
+                            $jobData['job_title']          = $job_title;
+                            $jobData['industry']           = $industry;
+                            $jobData['department']         = $department;
+                            $jobData['role']               = $role;
+                            $jobData['job_type']           = $job_type;
+                            $jobData['perks']              = $add_perks;
+                            $jobData['job_des']            = $job_des;
+                            $jobData['location_type']      = $location_type;
+                            $jobData['work_location_type'] = $work_location_type;
+                            $jobData['address_no']         = $this->JobDetailsModel->generate_unique_string(4);
+                            $jobData['updated_at']         = strtotime(date('d-m-Y'));
+                            $jobData['update_date']        = date('d-m-Y');
+                            $jobData['is_completed']       = 1;
 
-                            //compensation details 
-                            $jobData['paytype'] = $paytype;
-                            if ($paytype == 1 && $paytype != 2 && $paytype != 3) {
-                                $jobData['min_salary'] = $min_salary;
-                                $jobData['max_salary'] = $max_salary;
-                            } elseif ($paytype != 1 && $paytype == 2 && $paytype != 3) {
-                                $jobData['min_salary'] = $min_salary;
-                                $jobData['max_salary'] = $max_salary;
-                                $jobData['incentive']  = $incentive;
-                            } elseif ($paytype != 1 && $paytype != 2 && $paytype == 3) {
-                                $jobData['incentive']  = $incentive;
-                            }
-                            //compensation details end
+                            //salary range details 
+                            $jobData['min_salary']         = $min_salary;
+                            $jobData['max_salary']         = $max_salary;
+                            //salary range details end
 
+                            // print_r($jobData);
+                            // die();
 
                             $result = $this->JobDetailsModel->update('job_details', $jobData, array('id' => $job_id));
                             // job details end
@@ -380,58 +379,71 @@ class JobDetails extends CI_Controller
                             if ($location_type != 1 && $location_type == 2 && $location_type != 3) {
 
                                 $locData['user_id']        = $user_id;
+                                $locData['address_no']     = $jobData['address_no'];
                                 $locData['location_type']  = $location_type;
                                 $locData['location_type_name']  = "WFH";
                                 $locData['wh_city']        = $wh_city;
                                 $locData['wh_address']     = $wh_address;
                                 $locData['wh_address2']    = $wh_address2;
-                                // $locData['address_no']     = $jobData['address_no'];
                                 $locData['is_active']      = 1;
-                                $locData['is_verify']      = 1;
-                                $locData['updated_at']     = strtotime(date('d-m-Y'));
+                                $locData['created_at']     = strtotime(date('d-m-Y'));
                             } elseif ($location_type == 1 && $location_type != 2 && $location_type != 3) {
 
                                 $locData['user_id']        = $user_id;
+                                $locData['address_no']     = $jobData['address_no'];
                                 $locData['location_type']  = $location_type;
                                 $locData['location_type_name']  = "WFO";
                                 $locData['wo_place']       = $wo_place;
                                 if ($wo_place == 1) {
                                     $locData['wo_city']    = $wo_city;
                                 }
-                                // $locData['address_no']     = $jobData['address_no'];
                                 $locData['is_active']      = 1;
-                                $locData['is_verify']      = 1;
-                                $locData['updated_at']     = strtotime(date('d-m-Y'));
+                                $locData['created_at']     = strtotime(date('d-m-Y'));
                             } elseif ($location_type != 1 && $location_type != 2 && $location_type == 3) {
 
                                 $locData['user_id']        = $user_id;
+                                $locData['address_no']     = $jobData['address_no'];
                                 $locData['location_type']  = $location_type;
-                                $locData['location_type_name']  = "FJ";
-                                $locData['fj_area']        = $fj_area;
-                                // $locData['address_no']     = $jobData['address_no'];
+                                $locData['location_type_name']  = "HYBRID";
                                 $locData['is_active']      = 1;
-                                $locData['is_verify']      = 1;
-                                $locData['updated_at']     = strtotime(date('d-m-Y'));
+                                $locData['created_at']     = strtotime(date('d-m-Y'));
                             }
 
-                            $getLocation = $this->JobDetailsModel->getRecord('job_details', array('id' => $job_id))->row_array()['address_no'];
-
-                            $locResult = $this->JobDetailsModel->update('job_location', $locData, array('address_no' => $getLocation));
-
-                            // print_r($locResult);
-                            // die();
+                            $locResult = $this->JobDetailsModel->insert('job_location', $locData);
                             //location details end
 
+                            // work location details
+                            if ($work_location_type == 1 && $work_location_type != 2) {
+                                $wlData['user_id']         = $user_id;
+                                $wlData['address_no']      = $jobData['address_no'];
+                                $wlData['work_location_type'] = $work_location_type;
+                                $wlData['wl_country']      = $wl_country;
+                                $wlData['wl_state']        = $wl_state;
+                                $wlData['wl_pincode']      = $wl_pincode;
+                                $wlData['wl_latitude']     = $wl_latitude;
+                                $wlData['wl_longitude']    = $wl_longitude;
+                                $wlData['is_active']       = 1;
+                                $wlData['created_at']      = strtotime(date('d-m-Y'));
+                            } elseif ($work_location_type != 1 && $work_location_type == 2) {
+                                $wlData['user_id']            = $user_id;
+                                $wlData['address_no']         = $jobData['address_no'];
+                                $wlData['work_location_type'] = $work_location_type;
+                                $wlData['same_reg_address']   = $this->CommonModel->getRecord('user', array('id' => $user_id))->row_array()['reg_address'];
+                                $wlData['is_active']          = 1;
+                                $wlData['created_at']         = strtotime(date('d-m-Y'));
+                            }
+
+                            $wlResult = $this->JobDetailsModel->insert('jd_location', $wlData);
+                            // work location details end
 
                             if ($jobData['user_id']) {
-
                                 if ($result && $locResult) {
                                     // $this->JobDetailsModel->insert('candidate_req', array('job_id' => $result, 'user_id' => $user_id));
                                     // $this->JobDetailsModel->insert('interviewer_info', array('job_id' => $result, 'user_id' => $user_id));
                                     $this->responseData['code']         = 200;
                                     $this->responseData['status']       = 'success';
-                                    // $this->responseData['job_id']       = $result;
-                                    // $this->responseData['job_details']  = $this->JobDetailsModel->getRecord('jobeditJobProfile_details', array('id' => $result))->row_array();
+                                    $this->responseData['job_id']       = $result;
+                                    $this->responseData['job_details']  = $this->JobDetailsModel->getRecord('job_details', array('id' => $result))->row_array();
                                     $this->responseData['message']      = "Updated successfully.";
                                 } else {
                                     $this->responseData['code']    = 401;
@@ -441,7 +453,7 @@ class JobDetails extends CI_Controller
                                 }
                             } else {
                                 $this->responseData['code'] = 404;
-                                $this->responseData['message'] = 'Not found ';
+                                $this->responseData['message'] = 'User not found!';
                                 $this->responseData['status']  = 'failed';
                             }
                         } else {
@@ -453,7 +465,7 @@ class JobDetails extends CI_Controller
                     } else {
                         $this->responseData['code']    = 404;
                         $this->responseData['status']  = 'failed';
-                        $this->responseData['message'] = 'Required param missing: user_id';
+                        $this->responseData['message'] = 'Required param missing: user_id!';
                     }
                 } else {
                     $this->responseData['code']    = 400;
@@ -463,7 +475,7 @@ class JobDetails extends CI_Controller
             } else {
                 $this->responseData['code']    = 400;
                 $this->responseData['status']  = 'failed';
-                $this->responseData['message'] = 'Invalid request';
+                $this->responseData['message'] = 'Invalid request!';
             }
             unset($json_data);
         } elseif ($isAuth == 0) {
@@ -477,6 +489,7 @@ class JobDetails extends CI_Controller
         }
         self::setOutPut();
     }
+
 
     /**
      *  get job list by user_id(employer)
