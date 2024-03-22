@@ -300,6 +300,15 @@ class SignIn extends CI_Controller
 								$this->responseData['message']   = "OTP sent successfully.";
 								$this->responseData['mobile']    = intval($this->CommonModel->getRecord('user', array('mobile' => $reqData['mobile']))->row_array()['mobile']);
 								$this->responseData['temp_otp']  = intval($updateUserData['otp_code']);
+								$secretKey = "seekk!@#$%2023";
+								// Payload data (e.g., user ID, username, etc.)
+								$payloadData = [
+									'iss' => 'localhost',
+									'aud' => 'localhost',
+									// 'iat' => time(),
+									// 'exp' => time() + 3600, 
+									// Token expiration time (1 hour from now)
+								];
 								$jwtToken = JWT::encode($payloadData, $secretKey, 'HS256');
 								if ($jwtToken) {
 									$this->responseData['token']  = $jwtToken;

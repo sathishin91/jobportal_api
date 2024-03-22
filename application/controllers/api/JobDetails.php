@@ -363,6 +363,7 @@ class JobDetails extends CI_Controller
                             $jobData['updated_at']         = strtotime(date('d-m-Y'));
                             $jobData['update_date']        = date('d-m-Y');
                             $jobData['is_completed']       = 1;
+                            $jobData['is_active']          = 1;
 
                             //salary range details 
                             $jobData['min_salary']         = $min_salary;
