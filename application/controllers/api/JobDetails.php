@@ -1537,7 +1537,7 @@ class JobDetails extends CI_Controller
 
                                     $result = $this->JobDetailsModel->update('user', $jobData, array('mobile' => $mobile, 'role_id' => $role_id));
 
-                                    $logo_url = base_url() . 'assets/api/logo' . $jobData['user_avatar'];
+                                    $logo_url = base_url() . 'assets/api/logo/' . $jobData['user_avatar'];
 
                                     $result = $this->JobDetailsModel->update('job_details', array('logo_url' =>   $logo_url), array('user_id' => $getRecord['id']));
 
