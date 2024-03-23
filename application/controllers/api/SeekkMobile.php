@@ -1076,12 +1076,11 @@ class SeekkMobile extends CI_Controller
 
                             );
 
-                            $where = array('job_details.id' => $job_id, 'job_details.is_verify' => 1);
+                            $where = array('job_details.id' => $job_id);
 
-                            $result = $this->CommonModel->get_join('job_details', $val, $join, $where, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row();
+                            $result = $this->CommonModel->get_join('job_details', $val, $join, $where, $order_by = 'job_details.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row_array();
 
                             if ($result) {
-                                // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
 
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
