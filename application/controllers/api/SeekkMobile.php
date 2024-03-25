@@ -983,7 +983,7 @@ class SeekkMobile extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $result = $this->CommonModel->select_rec('job_details', '*')->result_array();
+                            $result = $this->CommonModel->select_rec('job_details', '*', array('is_verify' => 1))->result_array();
 
                             if ($result) {
                                 // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));

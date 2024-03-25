@@ -537,10 +537,10 @@ class JobDetails extends CI_Controller
                             //     $likearray['check_in.user_id'] = $userData['user_id'];
                             // }
                             // $user_id =
-                            $whereCompleted  = array('job_details.user_id' => $reqData['user_id'], 'job_details.is_completed ' => 3);
+                            $whereCompleted  = array('job_details.user_id' => $reqData['user_id'], 'job_details.is_completed ' => 3, 'job_details.is_verify' => 1);
                             $result = $this->JobDetailsModel->get_join('job_details', $val, $join, $whereCompleted, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
 
-                            $wherePending  = array('job_details.user_id' => $reqData['user_id'], 'job_details.is_completed <' => 3);
+                            $wherePending  = array('job_details.user_id' => $reqData['user_id'], 'job_details.is_completed <' => 3, 'job_details.is_verify' => 1);
                             $pendingResult = $this->JobDetailsModel->get_join('job_details', $val, $join, $wherePending, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
 
                             if ($result || $pendingResult) {
