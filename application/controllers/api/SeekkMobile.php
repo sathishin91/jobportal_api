@@ -982,11 +982,30 @@ class SeekkMobile extends CI_Controller
 
 
                         if ($this->form_validation->run() == TRUE) {
+                            $val = 'job_details.*,
+                            job_location.location_type,job_location.location_type_name,job_location.wo_place,job_location.wo_city,job_location.wh_address,job_location.wh_address2,job_location.wh_city,
+                            industry.industry_name,
+                            department.department_name,
+                            role.role_name,
+                            user.company_name
+                           ';
 
-                            $result = $this->CommonModel->select_rec('job_details', '*', array('is_verify' => 1))->result_array();
+                            $join = array(
+                                array('table' => 'job_location', 'condition' => 'job_location.address_no = job_details.address_no', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'industry', 'condition' => 'industry.id = job_details.industry', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'department', 'condition' => 'department.id = job_details.department', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'role', 'condition' => 'role.id = job_details.role', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'user', 'condition' => 'user.id = job_details.user_id', 'jointype' => 'LEFT JOIN'),
+
+                            );
+
+                            $where = array('job_details.is_verify' => 1);
+
+                            $result = $this->CommonModel->get_join('job_details', $val, $join, $where, $order_by = 'job_details.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
+
+                            // $result = $this->CommonModel->select_rec('job_details', '*', array('is_verify' => 1))->result_array();
 
                             if ($result) {
-                                // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
 
                                 $this->responseData['code']         = 200;
                                 $this->responseData['status']       = 'success';
@@ -1281,8 +1300,6 @@ class SeekkMobile extends CI_Controller
 
                             if ($user_id) {
                                 $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
-                                // print_r($userData);
-                                // die();
 
                                 if (!empty($getRecord)) {
                                     if (empty($getRecord['id_upload'])) {
