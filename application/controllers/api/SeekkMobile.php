@@ -1484,8 +1484,9 @@ class SeekkMobile extends CI_Controller
 
                             if ($user_id) {
                                 $getRecord = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row();
+                                $getResumeRecord = $this->UserModel->getRecord('doc_resume', array('user_id' => $user_id))->row_array();
 
-                                if (!empty($getRecord)) {
+                                if (!empty($getRecord) && !(empty($getResumeRecord))) {
                                     if (empty($getRecord->resume)) {
                                         $result = $this->CommonModel->update('doc_resume', $userData, array('user_id' => $user_id));
                                     } else {
@@ -1503,6 +1504,21 @@ class SeekkMobile extends CI_Controller
                                         $this->responseData['code']    = 401;
                                         $this->responseData['status']  = 'failed';
                                         $this->responseData['message'] = 'Not updated successfully!';
+                                        unset($this->responseData['data']);
+                                    }
+                                } elseif (!empty($getRecord) && empty($getResumeRecord)) {
+                                    $userData['id']          = $user_id;
+                                    $result = $this->CommonModel->insert('doc_resume', $userData);
+                                    if ($result) {
+                                        $this->responseData['code']         = 200;
+                                        $this->responseData['status']       = 'success';
+                                        $this->responseData['resume_url']   = base_url('assets/api/doc/');
+                                        // $this->responseData['data']         = $result;
+                                        $this->responseData['message']      = "Updated successfully.";
+                                    } else {
+                                        $this->responseData['code']    = 401;
+                                        $this->responseData['status']  = 'failed';
+                                        $this->responseData['message'] = 'Wrong User';
                                         unset($this->responseData['data']);
                                     }
                                 } else {

@@ -629,7 +629,10 @@ class JobDetails extends CI_Controller
 
                             $resultEducation = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row_array(); //only employee profile
 
-                            if ($result || $resultExperience || $resultSkill || $resultEducation) {
+                            $resultResume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row_array(); //only employee profile
+
+
+                            if ($result || $resultExperience || $resultSkill || $resultEducation ||  $resultResume) {
 
                                 $this->responseData['code']        = 200;
                                 $this->responseData['status']      = 'success';
@@ -638,6 +641,7 @@ class JobDetails extends CI_Controller
                                 $this->responseData['experienceData']  = $resultExperience;
                                 $this->responseData['skillData']       = $resultSkill;
                                 $this->responseData['educationData']   = $resultEducation;
+                                $this->responseData['resultResume']   = base_url('assets/api/doc/');
                             } else {
                                 $this->responseData['code']    = 401;
                                 $this->responseData['status']  = 'failed';
