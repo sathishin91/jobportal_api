@@ -17,7 +17,6 @@ class SeekkMobile extends CI_Controller
         Header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE'); //method allowed
     }
 
-
     /**
      * common function for set output
      * function will set output in json format

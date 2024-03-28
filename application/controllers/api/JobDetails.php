@@ -526,6 +526,7 @@ class JobDetails extends CI_Controller
                             applied_jobs.is_active, applied_jobs.created_at,
                          
                             user.role_id, user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at,
+
                             education_info.*,
                             experience_info.*,
                             skill_info.*,
@@ -620,46 +621,23 @@ class JobDetails extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $val = 'user.id,
-                            experience_info.experience,
-                            experience_info.total_experience_month,
-                            experience_info.total_experience_year,
-                            experience_info.job_title,
-                            experience_info.company_name,
-                            experience_info.current_salary,
-                            experience_info.employment_type,
-                            experience_info.notice_period,
-                            experience_info.start_date,
-                            experience_info.end_date,
+                            $result = $this->CommonModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array(); //only employee profile
 
-                            skill_info.skill,
-                            education_info.highest_education,
-                            education_info.college_name,
-                            education_info.degree,
-                            education_info.specialization,
-                            education_info.education_type,
-                            education_info.comp_year,
-                             ';
+                            $resultExperience = $this->CommonModel->getRecord('experience_info', array('user_id' => $user_id))->row_array(); //only employee profile
 
-                            $join = array(
-                                array('table' => 'experience_info', 'condition' => 'experience_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            $resultSkill = $this->CommonModel->getRecord('skill_info', array('user_id' => $user_id))->row_array(); //only employee profile
 
-                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            $resultEducation = $this->CommonModel->getRecord('education_info', array('user_id' => $user_id))->row_array(); //only employee profile
 
-                                array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
-                            );
-
-                            // $result = $this->CommonModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row(); //only employee profile
-
-                            $where  = array('user.role_id' => 4, 'user.id' => $user_id);
-                            $result = $this->JobDetailsModel->get_join('user', $val, $join, $where, $order_by = 'user.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row_array();
-
-                            if ($result) {
+                            if ($result || $resultExperience || $resultSkill || $resultEducation) {
 
                                 $this->responseData['code']        = 200;
                                 $this->responseData['status']      = 'success';
                                 $this->responseData['message']     = "Fetched successfully.";
-                                $this->responseData['data']        = $result;
+                                $this->responseData['userData']        = $result;
+                                $this->responseData['experienceData']  = $resultExperience;
+                                $this->responseData['skillData']       = $resultSkill;
+                                $this->responseData['educationData']   = $resultEducation;
                             } else {
                                 $this->responseData['code']    = 401;
                                 $this->responseData['status']  = 'failed';
@@ -1525,6 +1503,116 @@ class JobDetails extends CI_Controller
                 $this->responseData['code']    = 400;
                 $this->responseData['status']  = 'failed';
                 $this->responseData['message'] = 'Invalid request';
+            }
+        } elseif ($isAuth == 0) {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Token is invalid or expired!';
+        } else {
+            $this->responseData['code']    = 400;
+            $this->responseData['status']  = 'failed';
+            $this->responseData['message'] = 'Bearer Token required!';
+        }
+
+        self::setOutPut();
+    }
+
+
+    /*
+     * search job
+     */
+    public function searchJob()
+    {
+        $isAuth = $this->ApiCommonModel->decodeToken();
+        if ($isAuth == 1) {
+            $json_data = json_decode(file_get_contents("php://input"));
+
+            $api_key           = $json_data->api_key;
+            $input             = $json_data->input;
+
+            if ($json_data) {
+                // $api_key = $this->input->post('api_key');
+                $api_key = $json_data->api_key;
+
+                if ($this->ApiCommonModel->checkApiKey($api_key)) {
+                    $reqData = $json_data;
+                    $reqData = (array) $reqData;
+
+                    if (!empty($api_key)) {
+
+                        $this->form_validation->set_data($reqData);
+                        $this->form_validation->set_rules('api_key', 'Api Key', 'required|trim');
+
+                        if ($this->form_validation->run() == TRUE) {
+
+                            $val = 'job_details.*,
+                            candidate_req.*,
+                            experience_info.*,
+                            interviewer_info.*,
+                            user.company_name
+                           ';
+
+                            $join = array(
+                                array('table' => 'candidate_req', 'condition' => 'candidate_req.job_id = job_details.id', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'experience_info', 'condition' => 'experience_info.job_id = job_details.id', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'interviewer_info', 'condition' => 'interviewer_info.job_id = job_details.id', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'job_location', 'condition' => 'job_location.address_no = job_details.address_no', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'industry', 'condition' => 'industry.id = job_details.industry', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'department', 'condition' => 'department.id = job_details.department', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'role', 'condition' => 'role.id = job_details.role', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'user', 'condition' => 'user.id = job_details.user_id', 'jointype' => 'LEFT JOIN'),
+
+
+                            );
+
+                            $like['candidate_req.skills,candidate_req.min_experience,candidate_req.any_experience,candidate_req.language,candidate_req.eng_lvl,candidate_req.skills,candidate_req.qualification,candidate_req.experience_type,candidate_req.notice_period,interviewer_info.interview_type_name,job_details.job_type'] = $input;
+
+                            $whereCompleted  = array('job_details.is_verify' => 1);
+                            $result = $this->CommonModel->get_join('job_details', $val, $join, $whereCompleted, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = $like, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
+
+                            if ($result) {
+                                // $result = $this->UserModel->update('skill_info', $userData, array('user_id' => $user_id));
+
+                                $this->responseData['code']         = 200;
+                                $this->responseData['status']       = 'success';
+                                $this->responseData['message']      = 'Job list fetched successfully.';
+                                if ($skill == "") {
+                                    $this->responseData['data']         = [];
+                                } else {
+                                    $this->responseData['data']         = $result;
+                                }
+                            } else {
+                                $this->responseData['code']    = 404;
+                                $this->responseData['message'] = 'No job found!';
+                                $this->responseData['status']  = 'failed';
+                            }
+                        } else {
+                            $msg = $this->ApiCommonModel->validationErrorMsg();
+                            $this->responseData['code']    = 400;
+                            $this->responseData['status']  = 'failed';
+                            $this->responseData['message'] = $msg;
+                        }
+                    } else {
+                        $this->responseData['code']    = 404;
+                        $this->responseData['status']  = 'failed';
+                        $this->responseData['message'] = 'Required param missing: api_key!';
+                    }
+                } else {
+                    $this->responseData['code']    = 400;
+                    $this->responseData['status']  = 'failed';
+                    $this->responseData['message'] = 'Invalid api key!';
+                }
+            } else {
+                $this->responseData['code']    = 400;
+                $this->responseData['status']  = 'failed';
+                $this->responseData['message'] = 'Invalid request!';
             }
         } elseif ($isAuth == 0) {
             $this->responseData['code']    = 400;
