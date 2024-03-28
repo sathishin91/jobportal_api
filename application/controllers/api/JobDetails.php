@@ -425,7 +425,11 @@ class JobDetails extends CI_Controller
                         
                             job_location.address_no,job_location.location_type,job_location.location_type_name, job_location.wo_place, job_location.wo_city, job_location.wh_address, job_location.wh_address2,job_location.wh_city,
 
-                            department.department_name,industry.industry_name,role.role_name
+                            department.department_name,industry.industry_name,role.role_name,
+
+                            candidate_req.experience_type,candidate_req.min_experience,candidate_req.any_experience,candidate_req.qualification,candidate_req.skills,
+                            interviewer_info.interview_type,interviewer_info.interview_type_name
+
                             ';
 
                             $join = array(
@@ -433,14 +437,10 @@ class JobDetails extends CI_Controller
                                 array('table' => 'industry', 'condition' => 'job_details.industry = industry.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'department', 'condition' => 'job_details.department = department.id', 'jointype' => 'LEFT JOIN'),
                                 array('table' => 'role', 'condition' => 'job_details.role = role.id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'candidate_req', 'condition' => 'job_details.id = candidate_req.job_id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'interviewer_info', 'condition' => 'job_details.id = interviewer_info.job_id', 'jointype' => 'LEFT JOIN'),
                             );
 
-                            // $likearray = null;
-
-                            // if ($userData['user_id'] && $userData['user_id'] != '') {
-                            //     $likearray['check_in.user_id'] = $userData['user_id'];
-                            // }
-                            // $user_id =
                             $whereCompleted  = array('job_details.user_id' => $reqData['user_id'], 'job_details.is_completed ' => 3, 'job_details.is_verify' => 1);
                             $result = $this->JobDetailsModel->get_join('job_details', $val, $join, $whereCompleted, $order_by = 'job_details.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
 
@@ -525,24 +525,24 @@ class JobDetails extends CI_Controller
                             $val = 'applied_jobs.id,applied_jobs.job_id,applied_jobs.user_id,
                             applied_jobs.is_active, applied_jobs.created_at,
                          
-                            user.role_id, user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at
+                            user.role_id, user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at,
+                            education_info.*,
+                            experience_info.*,
+                            skill_info.*,
                              ';
 
                             $join = array(
                                 array('table' => 'user', 'condition' => 'user.id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'education_info', 'condition' => 'education_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'experience_info', 'condition' => 'experience_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+
                             );
 
-                            // $likearray = null;
 
-                            // if ($userData['user_id'] && $userData['user_id'] != '') {
-                            //     $likearray['check_in.user_id'] = $userData['user_id'];
-                            // }
-                            // $user_id =
                             $whereCompleted  = array('applied_jobs.job_id' => $reqData['job_id'], 'user.role_id' => 4);
-                            $result = $this->JobDetailsModel->get_join('applied_jobs', $val, $join, $whereCompleted, $order_by = 'applied_jobs.id', $order = 'ASC', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
+                            $result = $this->JobDetailsModel->get_join('applied_jobs', $val, $join, $whereCompleted, $order_by = 'applied_jobs.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
 
-                            // print_r($result);
-                            // die();
 
                             if ($result) {
 
@@ -620,7 +620,39 @@ class JobDetails extends CI_Controller
 
                         if ($this->form_validation->run() == TRUE) {
 
-                            $result = $this->CommonModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row(); //only employee profile
+                            $val = 'user.id,
+                            experience_info.experience,
+                            experience_info.total_experience_month,
+                            experience_info.total_experience_year,
+                            experience_info.job_title,
+                            experience_info.company_name,
+                            experience_info.current_salary,
+                            experience_info.employment_type,
+                            experience_info.notice_period,
+                            experience_info.start_date,
+                            experience_info.end_date,
+
+                            skill_info.skill,
+                            education_info.highest_education,
+                            education_info.college_name,
+                            education_info.degree,
+                            education_info.specialization,
+                            education_info.education_type,
+                            education_info.comp_year,
+                             ';
+
+                            $join = array(
+                                array('table' => 'experience_info', 'condition' => 'experience_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+
+                                array('table' => 'education_info', 'condition' => 'education_info.user_id = user.id', 'jointype' => 'LEFT JOIN'),
+                            );
+
+                            // $result = $this->CommonModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row(); //only employee profile
+
+                            $where  = array('user.role_id' => 4, 'user.id' => $user_id);
+                            $result = $this->JobDetailsModel->get_join('user', $val, $join, $where, $order_by = 'user.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->row_array();
 
                             if ($result) {
 

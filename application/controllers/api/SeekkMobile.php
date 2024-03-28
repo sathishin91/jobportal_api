@@ -1301,6 +1301,7 @@ class SeekkMobile extends CI_Controller
                             if ($user_id) {
                                 $getRecord = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
 
+
                                 if (!empty($getRecord)) {
                                     if (empty($getRecord['id_upload'])) {
                                         $result = $this->UserModel->update('user', $userData, array('id' => $user_id));
@@ -1484,8 +1485,6 @@ class SeekkMobile extends CI_Controller
 
                             if ($user_id) {
                                 $getRecord = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row();
-                                // print_r($getRecord->resume);
-                                // die();
 
                                 if (!empty($getRecord)) {
                                     if (empty($getRecord->resume)) {
