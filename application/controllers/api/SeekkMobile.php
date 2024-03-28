@@ -1483,14 +1483,14 @@ class SeekkMobile extends CI_Controller
                             $userData['resume']    = $rand . 'doc.pdf';
 
                             if ($user_id) {
-                                $getRecord = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row();
-                                $getResumeRecord = $this->UserModel->getRecord('doc_resume', array('user_id' => $user_id))->row_array();
+                                $getRecord         = $this->UserModel->getRecord('user', array('id' => $user_id, 'role_id' => 4))->row_array();
+                                $getResumeRecord = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row_array();
 
                                 if (!empty($getRecord) && !(empty($getResumeRecord))) {
-                                    if (empty($getRecord->resume)) {
+                                    if (empty($getResumeRecord->resume)) {
                                         $result = $this->CommonModel->update('doc_resume', $userData, array('user_id' => $user_id));
                                     } else {
-                                        unlink($this->DIR_doc . $getRecord->resume);
+                                        unlink($this->DIR_doc . $getResumeRecord->resume);
                                         $result = $this->CommonModel->update('doc_resume', $userData, array('user_id' => $user_id));
                                     }
 
