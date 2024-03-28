@@ -1507,7 +1507,7 @@ class SeekkMobile extends CI_Controller
                                         unset($this->responseData['data']);
                                     }
                                 } elseif (!empty($getRecord) && empty($getResumeRecord)) {
-                                    $userData['id']          = $user_id;
+                                    $userData['user_id']          = $user_id;
                                     $result = $this->CommonModel->insert('doc_resume', $userData);
                                     if ($result) {
                                         $this->responseData['code']         = 200;
