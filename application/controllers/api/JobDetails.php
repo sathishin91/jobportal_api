@@ -527,26 +527,19 @@ class JobDetails extends CI_Controller
                          
                             user.role_id, user.first_name,user.last_name,user.mobile,user.email,user.dob,user.gender,user.is_active,user.is_completed,user.city,user.created_at,
 
-                            education_info.*,
-                            experience_info.*,
-                            skill_info.*,
                              ';
 
                             $join = array(
                                 array('table' => 'user', 'condition' => 'user.id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'education_info', 'condition' => 'education_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'experience_info', 'condition' => 'experience_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
-                                array('table' => 'skill_info', 'condition' => 'skill_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
-
+                                // array('table' => 'education_info', 'condition' => 'education_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+                                // array('table' => 'experience_info', 'condition' => 'experience_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
+                                // array('table' => 'skill_info', 'condition' => 'skill_info.user_id = applied_jobs.user_id', 'jointype' => 'LEFT JOIN'),
                             );
-
 
                             $whereCompleted  = array('applied_jobs.job_id' => $reqData['job_id'], 'user.role_id' => 4);
                             $result = $this->JobDetailsModel->get_join('applied_jobs', $val, $join, $whereCompleted, $order_by = 'applied_jobs.id', $order = '', $limit = '', $offset = '', $distinct = '', $likearray = null, $groupby = '', $whereinvalue = '', $whereinarray = '', $find_in_set = '')->result_array();
 
-
                             if ($result) {
-
                                 $this->responseData['code']        = 200;
                                 $this->responseData['status']      = 'success';
                                 $this->responseData['message']     = "Fetched successfully.";
@@ -631,9 +624,7 @@ class JobDetails extends CI_Controller
 
                             $resultResume = $this->CommonModel->getRecord('doc_resume', array('user_id' => $user_id))->row_array(); //only employee profile
 
-
                             if ($result || $resultExperience || $resultSkill || $resultEducation ||  $resultResume) {
-
                                 $this->responseData['code']        = 200;
                                 $this->responseData['status']      = 'success';
                                 $this->responseData['message']     = "Fetched successfully.";
@@ -641,11 +632,15 @@ class JobDetails extends CI_Controller
                                 $this->responseData['experienceData']  = $resultExperience;
                                 $this->responseData['skillData']       = $resultSkill;
                                 $this->responseData['educationData']   = $resultEducation;
-                                $this->responseData['resultResume']   = base_url('assets/api/doc/');
+                                if (!empty($resultResume)) {
+                                    $this->responseData['resultResume']    = base_url('assets/api/doc/') . $resultResume['resume'];
+                                } else {
+                                    $this->responseData['resultResume']  = NULL;
+                                }
                             } else {
                                 $this->responseData['code']    = 401;
                                 $this->responseData['status']  = 'failed';
-                                $this->responseData['message'] = 'Not fetched';
+                                $this->responseData['message'] = 'User details not fetched!';
                                 $this->responseData['data']    = [];
                                 unset($this->responseData['data']);
                             }
