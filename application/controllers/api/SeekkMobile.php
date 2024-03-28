@@ -1512,7 +1512,7 @@ class SeekkMobile extends CI_Controller
                                     if ($result) {
                                         $this->responseData['code']         = 200;
                                         $this->responseData['status']       = 'success';
-                                        $this->responseData['resume_url']   = base_url('assets/api/doc/');
+                                        $this->responseData['resume_url']   = base_url('assets/api/doc/' . $userData['resume']);
                                         // $this->responseData['data']         = $result;
                                         $this->responseData['message']      = "Updated successfully.";
                                     } else {
